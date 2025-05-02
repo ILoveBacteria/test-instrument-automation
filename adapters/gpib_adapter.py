@@ -98,22 +98,13 @@ class PrologixGPIBEthernet(ProtocolAdapter):
         """
         self.socket.connect((self.host, self.PORT))
         self._setup()
-        self.select(self.address)
+        self.set_address(self.address)
 
     def close(self) -> None:
         """
         Close the connection to the Prologix GPIB-Ethernet controller.
         """
         self.socket.close()
-
-    def select(self, addr: int) -> None:
-        """
-        Select the GPIB address of the device to communicate with.
-
-        Args:
-            addr (int): The GPIB address to select.
-        """
-        self._send(f'++addr {int(addr)}')
 
     def write(self, command: str) -> None:
         """
@@ -178,11 +169,11 @@ class PrologixGPIBEthernet(ProtocolAdapter):
         """
         Perform initial setup for the Prologix GPIB-Ethernet controller.
         """
-        self._send('++mode 1')  # Set to controller mode
-        self._send('++auto 0')  # Disable auto-read
-        self._send(f'++read_tmo_ms {int(self.prologix_read_timeout * 1000)}')  # Set read timeout
-        self._send('++eos 0')  # Set end-of-string to none
-        self._send('++eoi 1')  # Enable EOI (End-Or-Identify)
+        self.set_mode('controller')
+        self.set_auto_read(False)
+        self.set_read_timeout(self.prologix_read_timeout)
+        self.set_eos('none')
+        self.set_eoi(True)
         
     def set_address(self, primary: int, secondary: int = None) -> None:
         """
