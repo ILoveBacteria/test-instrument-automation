@@ -91,6 +91,7 @@ class PrologixGPIBEthernet(ProtocolAdapter):
             raise ValueError('Timeout must be >= 1ms and <= 3s')
 
         self.socket.settimeout(self.socket_read_timeout)
+        self.connect()
 
     def connect(self) -> None:
         """
