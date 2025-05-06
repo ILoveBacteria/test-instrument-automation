@@ -173,7 +173,7 @@ class PrologixGPIBEthernet(ProtocolAdapter):
         self.set_mode('controller')
         self.set_auto_read(False)
         self.set_read_timeout(self.prologix_read_timeout)
-        self.set_eos('none')
+        self.set_eos('crlf')
         self.set_eoi(True)
         
     def set_address(self, primary: int, secondary: int = None) -> None:

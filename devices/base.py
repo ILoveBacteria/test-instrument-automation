@@ -28,3 +28,9 @@ class Instrument:
         """
         self.send_command(command)
         return self.read_response()
+    
+    def setup(self):
+        """
+        Setup the instrument.
+        """
+        pass
