@@ -1,0 +1,33 @@
+{
+    "title": "Test scenario schema",
+    "type": "object",
+    "properties": {
+        "device": { "type": "string" },
+        "name": { "type": "string" },
+        "address": { "type": "integer" },
+        "steps": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "anyOf": [
+                    { "required": ["command"] },
+                    { "required": ["function"] },
+                    { "required": ["read"] }
+                ],
+                "properties": {
+                    "command": { "type": "string" },
+                    "function": { "type": "string" },
+                    "read": { "type": "integer" },
+                    "reading_times": { "type": "integer" },
+                    "interval": { "type": "number" },
+                    "print": { "type": "boolean" },
+                    "save_to_file": { "type": "string" },
+                    "comment": { "type": "string" }
+                },
+                "additionalProperties": false
+            }
+        }
+    },
+    "required": ["device", "name", "address", "steps"],
+    "additionalProperties": false
+}
