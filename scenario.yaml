@@ -1,0 +1,18 @@
+device: HP3458A
+name: hp3458
+address: 2
+
+steps:
+  - command: "PRESET NORM"
+  
+  - function: "measure_voltage"
+    reading_times: 10
+    interval: 0.1
+    comment: "Measure voltage 10 times with 0.1s interval"
+  
+  - read: 1024 # buffer size
+    print: true
+    save_to_file: 'test.txt'
+  
+  - function: "beep"
+    comment: "Beep once"
