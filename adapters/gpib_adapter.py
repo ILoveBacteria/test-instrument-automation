@@ -153,12 +153,12 @@ class PrologixGPIBEthernet(ProtocolAdapter):
         encoded_value = f'{value}\n'.encode('ascii')
         self.socket.send(encoded_value)
 
-    def _recv(self, byte_num: int) -> str:
+    def _recv(self, byte_num: int = 1024) -> str:
         """
         Receive data from the Prologix GPIB-Ethernet controller.
 
         Args:
-            byte_num (int): The number of bytes to read.
+            byte_num (int, optional): The number of bytes to read.
 
         Returns:
             str: The received data as a string.
