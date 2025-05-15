@@ -9,6 +9,36 @@ class ScenarioValidationError(Exception):
     pass
 
 
+class Step:
+    """Represents a single test step."""
+
+    def __init__(self, data: dict):
+        self.command = data.get('command')
+        self.function = data.get('function')
+        self.read = data.get('read')
+        self.print = data.get('print')
+        self.save_to_file = data.get('save_to_file')
+        self.reading_times = data.get('reading_times')
+        self.interval = data.get('interval')
+        self.comment = data.get('comment')
+
+    def __repr__(self):
+        return f'Step {self.command or self.function or self.read}'
+
+
+class Scenario:
+    """Structured representation of a test scenario."""
+
+    def __init__(self, data: dict):
+        self.device = data['device']
+        self.name = data['name']
+        self.address = data['address']
+        self.steps = [Step(step) for step in data['steps']]
+
+    def __repr__(self):
+        return f'Scenario {self.name} with {len(self.steps)} steps'
+
+
 class ScenarioParser:
     """
     Parses and validates YAML scenario files using a JSON schema.
