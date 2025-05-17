@@ -4,25 +4,12 @@ import json
 import yaml
 from jsonschema import validate
 
-from schema.step import Step
+from schema.scenario import Scenario
 
 
 class ScenarioValidationError(Exception):
     """Custom exception for scenario validation errors."""
     pass
-
-
-class Scenario:
-    """Structured representation of a test scenario."""
-
-    def __init__(self, data: dict):
-        self.device = data['device']
-        self.name = data['name']
-        self.address = data['address']
-        self.steps = [Step.from_dict(step) for step in data['steps']]
-
-    def __repr__(self):
-        return f'Scenario {self.name} with {len(self.steps)} steps'
 
 
 class ScenarioParser:
@@ -90,14 +77,16 @@ class ScenarioParser:
             raise ScenarioValidationError('Schema not loaded. Call load_schema() first.')
         validate(instance=self.data, schema=self.schema)        
 
-    def parse(self) -> dict:
+    def parse(self) -> Scenario:
         """
         Loads and validates the scenario file using the schema.
 
         Returns:
-            dict: Validated scenario data.
+            Scenario: Parsed and validated scenario object.
         """
         self.load()
         self.load_schema()
         self.validate()
-        return self.data
+        self.scenario = Scenario(self.data)
+        self.scenario.validate()
+        return self.scenario
