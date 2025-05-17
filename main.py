@@ -15,9 +15,9 @@ def test_instrument():
 
 def test_parsing():
     parser = ScenarioParser('scenario.yaml', 'core/schema.json')
-    read = parser.parse()
-    print(read)
+    scenario = parser.parse()
+    print(scenario)
  
  
 if __name__ == '__main__':
-    pass
+    test_parsing()

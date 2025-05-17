@@ -6,7 +6,7 @@ class Step:
         self.comment = data.get('comment')
 
     def __repr__(self):
-        return f'Step {self.command or self.function or self.read}'
+        return f'Step {self.data}'
         
     def validate(self):
         """
@@ -54,10 +54,11 @@ class FunctionStep(Step):
     def from_dict(data: dict) -> 'FunctionStep':
         """Factory method to create the correct FunctionStep subclass."""
         
-        if data['function'] == 'measure_voltage':
+        function = data['function']
+        if function == 'measure_voltage':
             return MeasureVoltage.from_dict(data)
         else:
-            raise ValueError('Unknown function type')
+            raise ValueError(f'Unknown function type: {function}')
 
 
 class ReadStep(Step):
