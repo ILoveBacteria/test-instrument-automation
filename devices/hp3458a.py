@@ -28,9 +28,6 @@ class HP3458A(Instrument):
         self.send_command(f'TIMER {interval}')
         self.send_command(f'NRDGS {reading_times},TIMER')
         self.send_command('TRIG SGL')
-        # Back to previous configs
-        self.send_command(f'NRDGS 1,AUTO')
-        self.send_command(f'TIMER 1')
         
     def external_buffer(self, enabled: bool):
         command = 'TBUFF ON' if enabled else 'TBUFF OFF'
