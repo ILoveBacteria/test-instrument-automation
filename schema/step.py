@@ -1,3 +1,7 @@
+from core.exceptions import ScenarioExecutionError
+from devices.base import Instrument
+
+
 class Step:
     """Represents a single test step."""
 
@@ -20,6 +24,19 @@ class Step:
                      'read' in self.data)
         if sum(condition) != 1:
             raise ValueError('Step must have exactly one of command, function, or read')
+        
+    def execute(self, instrument: Instrument, context: dict):
+        """
+        Executes the step on the given instrument.
+        
+        Args:
+            instrument: The device object (e.g., HP3458A) with callable methods.
+            context (dict): Stores variables, outputs, etc. during execution.
+        
+        Raises:
+            ScenarioExecutionError: If the step execution fails.
+        """
+        raise NotImplementedError('Subclasses must implement execute method')
 
     @staticmethod
     def from_dict(data: dict) -> 'Step':
@@ -43,6 +60,12 @@ class CommandStep(Step):
     @staticmethod
     def from_dict(data: dict) -> 'CommandStep':
         return CommandStep(data)
+    
+    def execute(self, instrument: Instrument, context: dict):
+        try:
+            instrument.send_command(self.command)
+        except Exception as e:
+            raise ScenarioExecutionError(f'Command {self.command} execution failed: {e}')
 
 
 class FunctionStep(Step):
