@@ -76,8 +76,12 @@ class FunctionStep(Step):
         function = data['function']
         if function == 'measure_voltage':
             return MeasureVoltage.from_dict(data)
-        else:
-            raise ValueError(f'Unknown function type: {function}')
+        return FunctionStep(data)        
+        # TODO: raise ValueError(f'Unknown function type: {function}')
+    
+    def execute(self, instrument):
+        method = getattr(instrument, self.function)
+        method()
 
 
 class ReadStep(Step):
