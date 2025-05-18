@@ -11,18 +11,23 @@
                 "type": "object",
                 "anyOf": [
                     { "required": ["command"] },
-                    { "required": ["function"] },
-                    { "required": ["read"] }
+                    { "required": ["function"] }
                 ],
                 "properties": {
                     "command": { "type": "string" },
                     "function": { "type": "string" },
-                    "read": { "type": "integer" },
-                    "reading_times": { "type": "integer" },
-                    "interval": { "type": "number" },
-                    "print": { "type": "boolean" },
+                    "comment": { "type": "string" },
                     "save_to_file": { "type": "string" },
-                    "comment": { "type": "string" }
+                    "print": { "type": "boolean" },
+                    "params": {
+                        "type": "object",
+                        "properties": {
+                            "reading_times": { "type": "integer" },
+                            "interval": { "type": "number" },
+                            "buffer_size": { "type": "integer" }
+                        },
+                        "additionalProperties": false
+                    }
                 },
                 "additionalProperties": false
             }

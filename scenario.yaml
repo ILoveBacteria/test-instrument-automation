@@ -3,16 +3,19 @@ name: hp3458
 address: 2
 
 steps:
-  - command: "PRESET NORM"
+  - command: "BEEP"
   
   - function: "measure_voltage"
-    reading_times: 10
-    interval: 0.1
+    params:
+      reading_times: 1
+      interval: 1
     comment: "Measure voltage 10 times with 0.1s interval"
   
-  - read: 1024 # buffer size
+  - function: read_response # buffer size
+    params:
+      buffer_size: 1024
     print: true
-    save_to_file: 'test.txt'
+    # save_to_file: 'test.txt'
   
   - function: "beep"
     comment: "Beep once"
