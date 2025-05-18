@@ -25,7 +25,7 @@ class Step:
         if sum(condition) != 1:
             raise ValueError('Step must have exactly one of command, function, or read')
         
-    def execute(self, instrument: Instrument, context: dict):
+    def execute(self, instrument: Instrument):
         """
         Executes the step on the given instrument.
         
@@ -61,7 +61,7 @@ class CommandStep(Step):
     def from_dict(data: dict) -> 'CommandStep':
         return CommandStep(data)
     
-    def execute(self, instrument: Instrument, context: dict):
+    def execute(self, instrument: Instrument):
         try:
             instrument.send_command(self.command)
         except Exception as e:
@@ -94,6 +94,17 @@ class ReadStep(Step):
     @staticmethod
     def from_dict(data: dict) -> 'ReadStep':
         return ReadStep(data)
+    
+    def execute(self, instrument: Instrument):
+        try:
+            response = instrument.read_response(self.read)
+            if self.print:
+                print(response)
+            if self.save_to_file:
+                with open(self.save_to_file, 'w') as f:
+                    f.write(response)
+        except Exception as e:
+            raise ScenarioExecutionError(f'Read execution failed: {e}')
 
 
 class MeasureVoltage(FunctionStep):
@@ -110,3 +121,9 @@ class MeasureVoltage(FunctionStep):
     @staticmethod
     def from_dict(data: dict) -> 'MeasureVoltage':
         return MeasureVoltage(data)
+    
+    def execute(self, instrument: Instrument):
+        try:
+            instrument.measure_voltage(self.reading_times, self.interval)
+        except Exception as e:
+            raise ScenarioExecutionError(f'Measure voltage execution failed: {e}')
