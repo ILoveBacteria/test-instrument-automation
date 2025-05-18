@@ -1,4 +1,3 @@
-from core.exceptions import ScenarioExecutionError
 from devices.base import Instrument
 
 
@@ -62,10 +61,7 @@ class CommandStep(Step):
         return CommandStep(data)
     
     def execute(self, instrument: Instrument):
-        try:
-            instrument.send_command(self.command)
-        except Exception as e:
-            raise ScenarioExecutionError(f'Command {self.command} execution failed: {e}')
+        instrument.send_command(self.command)
 
 
 class FunctionStep(Step):
@@ -96,15 +92,12 @@ class ReadStep(Step):
         return ReadStep(data)
     
     def execute(self, instrument: Instrument):
-        try:
-            response = instrument.read_response(self.read)
-            if self.print:
-                print(response)
-            if self.save_to_file:
-                with open(self.save_to_file, 'w') as f:
-                    f.write(response)
-        except Exception as e:
-            raise ScenarioExecutionError(f'Read execution failed: {e}')
+        response = instrument.read_response(self.read)
+        if self.print:
+            print(response)
+        if self.save_to_file:
+            with open(self.save_to_file, 'w') as f:
+                f.write(response)
 
 
 class MeasureVoltage(FunctionStep):
@@ -123,7 +116,4 @@ class MeasureVoltage(FunctionStep):
         return MeasureVoltage(data)
     
     def execute(self, instrument: Instrument):
-        try:
-            instrument.measure_voltage(self.reading_times, self.interval)
-        except Exception as e:
-            raise ScenarioExecutionError(f'Measure voltage execution failed: {e}')
+        instrument.measure_voltage(self.reading_times, self.interval)
