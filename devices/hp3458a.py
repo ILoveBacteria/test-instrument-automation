@@ -17,19 +17,16 @@ class HP3458A(Instrument):
     def beep(self):
         self.send_command('BEEP')
         
-    def measure_voltage(self):
-        self.send_command('FUNC DCV')
-        self.send_command('TRIG SGL')
-        
-    def measure_voltage_interval(self, interval: int, count: int):
+    def measure_voltage(self, reading_times: int = 1, interval: float = 1.0):
         """
         Args:
-            interval (int): milliseconds
+            reading_times (int): Number of readings to take.
+            interval (float): Time interval between readings in seconds.
         """
         self.send_command('FUNC DCV')
         self.send_command('MEM FIFO') # Enable memory. remove all existing data in memory
-        self.send_command(f'TIMER {interval}E-3')
-        self.send_command(f'NRDGS {count},TIMER')
+        self.send_command(f'TIMER {interval}')
+        self.send_command(f'NRDGS {reading_times},TIMER')
         self.send_command('TRIG SGL')
         # Back to previous configs
         self.send_command(f'NRDGS 1,AUTO')
