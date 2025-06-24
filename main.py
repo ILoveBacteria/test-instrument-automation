@@ -1,7 +1,11 @@
 from devices.hp3458a import HP3458A
+from devices.hp53131a import HP53131A
+from devices.base import Instrument
 from adapters.gpib_adapter import PrologixGPIBEthernet
 from core.parser import ScenarioParser
 from core.executor import ScenarioExecutor
+
+import time
 
 
 def test_instrument():
@@ -40,7 +44,58 @@ def test_executing():
     hp3458a.setup()
     executor = ScenarioExecutor(scenario, hp3458a)
     executor.execute()
+    
+def test_counter():
+    adapter = PrologixGPIBEthernet('10.22.68.20', address=3, prologix_read_timeout=0.5, socket_read_timeout=5)
+    hp53131a = HP53131A('counter', adapter)
+    hp53131a.setup()
+    hp53131a.measure_frequency()
+    res = hp53131a.read_response()
+    print(res)
+    res = adapter.serial_poll()
+
+
+def run_fetch(inst, count):
+    data = []
+    start = time.time()
+    for i in range(count):
+        result = inst.query('FETC1?')
+        # data.append(result)
+    end = time.time()
+    return (end - start), data
+
+
+def run_read(inst, count):
+    data = []
+    start = time.time()
+    for i in range(count):
+        result = inst.query('READ2?')
+        # data.append(result)
+    end = time.time()
+    return (end - start), data
+
+
+def run_init_fetch(inst: Instrument, count):
+    data = []
+    start = time.time()
+    for i in range(count):
+        inst.send_command('INIT1')
+        result = inst.query('FETC2?')
+        # data.append(result)
+    end = time.time()
+    return (end - start), data
+
+
+def test_power():
+    adapter = PrologixGPIBEthernet('192.168.1.101', address=13, prologix_read_timeout=3, socket_read_timeout=10)
+    inst = Instrument('power meter', adapter)
+    count = 100
+    r, data = run_init_fetch(inst, count)
+    print(f'total of {count} measurements=', r)
+    print(r / count)
+    print()
+    print('\n'. join(data))
  
  
 if __name__ == '__main__':
-    test_executing()
+    test_power()
