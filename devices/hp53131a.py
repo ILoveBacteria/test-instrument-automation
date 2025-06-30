@@ -1,4 +1,4 @@
-from time import sleep
+import time
 
 from devices.base import Instrument
 
@@ -174,11 +174,60 @@ class HP53131A(Instrument):
     def measure_time_interval(self) -> float:
         """
         Measures the time interval between a start event on Channel 1 and a stop event on Channel 2.
+        By default, this measures the time between the rising edge on Ch1 and the rising edge on Ch2.
         
         Returns:
             The measured time interval in seconds.
         """
         return self._measure_single_shot(":CONF:TINT (@1),(@2)")
+
+    def measure_time_interval_edge_to_edge(self, start_edge: str, stop_edge: str) -> float:
+        """
+        Measures the time interval between a specified edge on Channel 1 (start)
+        and a specified edge on Channel 2 (stop).
+
+        Args:
+            start_edge: The edge for the start signal on Channel 1 ('POS' or 'NEG').
+            stop_edge: The edge for the stop signal on Channel 2 ('POS' or 'NEG').
+
+        Returns:
+            The measured time interval in seconds.
+            
+        SCPI Commands:
+            :CONFigure:TINTerval (@1),(@2)
+            [:SENSe]:EVENt1:SLOPe <edge>
+            [:SENSe]:EVENt2:SLOPe <edge>
+            :INITiate
+            :FETCh?
+        """
+        # Validate input parameters
+        valid_edges = ['POS', 'NEG']
+        start_edge_upper = start_edge.upper()
+        stop_edge_upper = stop_edge.upper()
+        
+        if start_edge_upper not in valid_edges or stop_edge_upper not in valid_edges:
+            raise ValueError("Edge arguments must be 'POS' or 'NEG'.")
+
+        # 1. Configure for a generic time interval measurement.
+        # This also resets related settings to defaults (like slope).
+        self.send_command(":CONF:TINT (@1),(@2)")
+
+        # 2. Set the specific slopes for the start and stop events.
+        self.send_command(f":SENS:EVEN1:SLOP {start_edge_upper}")
+        self.send_command(f":SENS:EVEN2:SLOP {stop_edge_upper}")
+
+        # 3. Perform the measurement sequence (INIT -> WAIT -> FETCH)
+        # Enable the Operation Complete bit to be summarized in the Status Byte
+        self.send_command('*ESE 1')
+        # Enable the Status Byte summary to assert SRQ
+        self.send_command('*SRE 32')
+        # Initiate the measurement
+        self.send_command(':INIT')
+        # Wait for the measurement to finish
+        self._wait_for_opc()
+        # Fetch the result
+        response = self.query(':FETCH?')
+        return float(response)
 
     def measure_period_average(self, channel: int, num_averages: int) -> float:
         """
