@@ -106,62 +106,62 @@ class HP3458A(Instrument):
 
     # --- Measurement Configuration Functions ---
 
-    def conf_function_DCV(self, mrange=None, nplc=100, AutoZero=True, HiZ=True):
+    def conf_function_DCV(self, mrange=None, nplc=1, AutoZero=True, HiZ=True):
         """Configures the meter to measure DCV. If range=None the meter is set to Autorange."""
         self.send_command('PRESET NORM')
         self.send_command('DCV')
-        self.send_command('NDIG 8')
+        self.send_command('NDIG 6')
         self.send_command('TRIG SGL')
         self.__set_range(mrange, nplc)
         self.__autoZero(AutoZero)
         self.__hiZ(HiZ)
 
-    def conf_function_DCI(self, mrange=None, nplc=100, AutoZero=True, HiZ=True):
+    def conf_function_DCI(self, mrange=None, nplc=1, AutoZero=True, HiZ=True):
         """Configures the meter to measure DCI. If range=None the meter is set to Autorange."""
         self.send_command('PRESET NORM')
         self.send_command('DCI')
-        self.send_command('NDIG 8')
+        self.send_command('NDIG 6')
         self.send_command('TRIG SGL')
         self.__set_range(mrange, nplc)
         self.__autoZero(AutoZero)
         self.__hiZ(HiZ)
 
-    def conf_function_ACV(self, mrange=None, nplc=100, AutoZero=True, HiZ=True):
+    def conf_function_ACV(self, mrange=None, nplc=1, AutoZero=True, HiZ=True):
         """Configures the meter to measure ACV (True RMS). If range=None the meter is set to Autorange."""
         self.send_command('PRESET NORM')
         self.send_command('ACV')
         self.send_command('SETACV SYNC')
-        self.send_command('NDIG 8')
+        self.send_command('NDIG 6')
         self.send_command('TRIG SGL')
         self.__set_range(mrange, nplc)
         self.__autoZero(AutoZero)
         self.__hiZ(HiZ)
 
-    def conf_function_ACI(self, mrange=None, nplc=100, AutoZero=True, HiZ=True):
+    def conf_function_ACI(self, mrange=None, nplc=1, AutoZero=True, HiZ=True):
         """Configures the meter to measure ACI. If range=None the meter is set to Autorange."""
         self.send_command('PRESET NORM')
         self.send_command('ACI')
-        self.send_command('NDIG 8')
+        self.send_command('NDIG 6')
         self.send_command('TRIG SGL')
         self.__set_range(mrange, nplc)
         self.__autoZero(AutoZero)
         self.__hiZ(HiZ)
 
-    def conf_function_OHM2W(self, mrange=None, nplc=100, AutoZero=True, OffsetCompensation=True):
+    def conf_function_OHM2W(self, mrange=None, nplc=1, AutoZero=True, OffsetCompensation=True):
         """Configures the meter to measure OHM2W. If range=None the meter is set to Autorange."""
         self.send_command('PRESET NORM')
         self.send_command('OHM')
-        self.send_command('NDIG 8')
+        self.send_command('NDIG 6')
         self.send_command('TRIG SGL')
         self.__set_range(mrange, nplc)
         self.__autoZero(AutoZero)
         self.__ocomp(OffsetCompensation)
 
-    def conf_function_OHM4W(self, mrange=None, nplc=100, AutoZero=True, OffsetCompensation=True):
+    def conf_function_OHM4W(self, mrange=None, nplc=1, AutoZero=True, OffsetCompensation=True):
         """Configures the meter to measure OHM4W. If range=None the meter is set to Autorange."""
         self.send_command('PRESET NORM')
         self.send_command('OHMF')
-        self.send_command('NDIG 8')
+        self.send_command('NDIG 6')
         self.send_command('TRIG SGL')
         self.__set_range(mrange, nplc)
         self.__autoZero(AutoZero)
@@ -201,7 +201,7 @@ class HP3458A(Instrument):
         self.send_command(f'FUNC FREQ, {range_param}, {resolution_param}')
         self.send_command('TRIG SGL')
 
-    def conf_function_ACDCV(self, mrange=None, nplc=100, ac_bandwidth_low=20, HiZ=True):
+    def conf_function_ACDCV(self, mrange=None, nplc=1, ac_bandwidth_low=20, HiZ=True):
         """
         Configures the meter to measure combined AC+DC Voltage (True RMS).
 
@@ -216,7 +216,7 @@ class HP3458A(Instrument):
         self.send_command('PRESET NORM')
         self.send_command('ACDCV')
         self.send_command(f'ACBAND {ac_bandwidth_low}')
-        self.send_command('NDIG 8')
+        self.send_command('NDIG 6')
         self.send_command('TRIG SGL')
         self.__set_range(mrange, nplc)
         self.__autoZero(True)  # Autozero is recommended for DC accuracy
