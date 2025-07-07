@@ -46,7 +46,7 @@ class HP3458A(Instrument):
         """
         return self.query('TEMP?')
         
-    def error(self):
+    def get_error(self):
         """
         Reads the error string from the instrument.
         Example response: 0,"NO ERROR" or 102,"TRIGGER TOO FAST"
