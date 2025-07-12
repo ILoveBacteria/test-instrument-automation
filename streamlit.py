@@ -30,7 +30,7 @@ with st.sidebar:
             st.session_state.instrument.adapter.close()
             st.session_state.instrument = None
             st.session_state.measurement_data = pd.DataFrame(columns=['Time', 'Measurement'])
-            st.experimental_rerun()
+            st.rerun()
     else:
         instrument_type = st.selectbox("Instrument", ["HP3458A", "HP53131A"])
         connection_type = st.selectbox("Connection Type", ["PyVISA", "Prologix GPIB-Ethernet"])
@@ -44,19 +44,19 @@ with st.sidebar:
         if st.button("Connect"):
             try:
                 adapter = None
-                # if connection_type == "PyVISA":
-                #     adapter = PyVisaAdapter(visa_string)
-                # else:
-                #     adapter = PrologixGPIBEthernet(prologix_ip, gpib_addr)
+                if connection_type == "PyVISA":
+                    adapter = PyVisaAdapter(visa_string)
+                else:
+                    adapter = PrologixGPIBEthernet(prologix_ip, gpib_addr, prologix_read_timeout=0.5, socket_read_timeout=15)
 
                 if instrument_type == "HP3458A":
                     st.session_state.instrument = HP3458A(name='HP3458A', adapter=adapter)
                 else:
                     st.session_state.instrument = HP53131A(name='HP53131A', adapter=adapter)
                 
-                # st.session_state.instrument.setup()
+                st.session_state.instrument.setup()
                 st.success("Connection successful!")
-                st.experimental_rerun()
+                st.rerun()
             except Exception as e:
                 st.error(f"Connection failed: {e}")
 
@@ -129,13 +129,13 @@ else:
                     if st.button("Start Totalizer"):
                         st.session_state.instrument.start_totalize(channel=tot_channel)
                         st.session_state.totalizer_running = True
-                        st.experimental_rerun()
+                        st.rerun()
                 else:
                     if st.button("Stop and Read Totalizer"):
                         count = st.session_state.instrument.stop_and_fetch_totalize()
                         st.metric("Total Count", count)
                         st.session_state.totalizer_running = False
-                        st.experimental_rerun()
+                        st.rerun()
 
         with st.expander("Single Measurement", expanded=True):
             meas_type = st.selectbox("Measurement Type", ["Frequency", "Period", "Time Interval"])
