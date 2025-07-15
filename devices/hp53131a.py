@@ -51,18 +51,13 @@ class HP53131A(Instrument):
             time.sleep(0.1)
         self.clear()
 
-    def _measure_single_shot(self, conf_command: str) -> float:
+    def _measure_single_shot(self) -> float:
         """
         Private helper to configure, initiate, wait, and fetch a single measurement.
-        
-        Args:
-            conf_command: The SCPI command to configure the measurement.
         
         Returns:
             The measured value as a float.
         """
-        # Configure the desired measurement (e.g., ':CONF:FREQ ...')
-        self.send_command(conf_command)
         # Enable the Operation Complete bit to be summarized in the Status Byte
         self.send_command('*ESE 1')
         # Enable the Status Byte summary to assert SRQ
@@ -155,7 +150,8 @@ class HP53131A(Instrument):
             The measured frequency in Hz.
         """
         conf_cmd = f":CONF:FREQ {expected_value},{resolution},(@{channel})"
-        return self._measure_single_shot(conf_cmd)
+        self.send_command(conf_cmd)
+        return self._measure_single_shot()
 
     def measure_period(self, channel: int = 1, expected_value: str = 'DEF', resolution: str = 'DEF') -> float:
         """
@@ -170,7 +166,8 @@ class HP53131A(Instrument):
             The measured period in seconds.
         """
         conf_cmd = f":CONF:PER {expected_value},{resolution},(@{channel})"
-        return self._measure_single_shot(conf_cmd)
+        self.send_command(conf_cmd)
+        return self._measure_single_shot()
 
     def measure_time_interval(self) -> float:
         """
@@ -180,7 +177,9 @@ class HP53131A(Instrument):
         Returns:
             The measured time interval in seconds.
         """
-        return self._measure_single_shot(":CONF:TINT (@1),(@2)")
+        conf_cmd = ":CONF:TINT (@1),(@2)"
+        self.send_command(conf_cmd)
+        return self._measure_single_shot()
 
     def measure_time_interval_edge_to_edge(self, start_edge: str, stop_edge: str) -> float:
         """
@@ -216,19 +215,7 @@ class HP53131A(Instrument):
         # 2. Set the specific slopes for the start and stop events.
         self.send_command(f":SENS:EVEN1:SLOP {start_edge_upper}")
         self.send_command(f":SENS:EVEN2:SLOP {stop_edge_upper}")
-
-        # 3. Perform the measurement sequence (INIT -> WAIT -> FETCH)
-        # Enable the Operation Complete bit to be summarized in the Status Byte
-        self.send_command('*ESE 1')
-        # Enable the Status Byte summary to assert SRQ
-        self.send_command('*SRE 32')
-        # Initiate the measurement
-        self.send_command(':INIT')
-        # Wait for the measurement to finish
-        self._wait_for_opc()
-        # Fetch the result
-        response = self.query(':FETCH?')
-        return float(response)
+        return self._measure_single_shot()
 
     def measure_period_average(self, channel: int, num_averages: int) -> float:
         """
