@@ -49,6 +49,7 @@ class HP53131A(Instrument):
             if time.time() - start_time > timeout_sec:
                 raise TimeoutError("Timeout waiting for operation to complete.")
             time.sleep(0.1)
+        self.clear()
 
     def _measure_single_shot(self, conf_command: str) -> float:
         """
