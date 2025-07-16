@@ -3,19 +3,32 @@ name: hp3458
 address: 2
 
 steps:
-  - command: "BEEP"
-  
-  - function: "measure_voltage"
+  - comment: "Configure instrument for DC Voltage"
+    function: conf_function_dcv
     params:
-      reading_times: 1
-      interval: 1
-    comment: "Measure voltage 10 times with 0.1s interval"
-  
-  - function: read_response # buffer size
+      nplc: 1
+      mrange: 10
+
+  - comment: "Measure voltage and validate"
+    function: get_reading
     params:
       buffer_size: 1024
-    print: true
-    # save_to_file: 'test.txt'
-  
-  - function: "beep"
-    comment: "Beep once"
+    measurement:
+      name: voltage
+      units: VOLT
+      validators:
+        - type: in_range
+          min: 4.9
+          max: 5.1
+
+  - comment: "Measure resistance and validate"
+    function: measure_resistance
+    measurement:
+      name: resistance
+      units: OHM
+      validators:
+        - type: equals
+          value: 100.0
+
+  - comment: "Beep once"
+    function: beep

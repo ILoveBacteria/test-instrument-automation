@@ -13,21 +13,13 @@
                     { "required": ["command"] },
                     { "required": ["function"] }
                 ],
+                "required": ["comment"],
                 "properties": {
                     "command": { "type": "string" },
                     "function": { "type": "string" },
                     "comment": { "type": "string" },
-                    "save_to_file": { "type": "string" },
-                    "print": { "type": "boolean" },
-                    "params": {
-                        "type": "object",
-                        "properties": {
-                            "reading_times": { "type": "integer" },
-                            "interval": { "type": "number" },
-                            "buffer_size": { "type": "integer" }
-                        },
-                        "additionalProperties": false
-                    }
+                    "params": { "type": "object" },
+                    "measurement": { "type": "object" }
                 },
                 "additionalProperties": false
             }
