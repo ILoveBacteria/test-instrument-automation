@@ -1,4 +1,4 @@
-from devices.hp3458a import HP3458A
+from devices import HP3458A
 from adapters.gpib_adapter import PrologixGPIBEthernet
 from adapters.pyvisa_adapter import PyVisaAdapter
 

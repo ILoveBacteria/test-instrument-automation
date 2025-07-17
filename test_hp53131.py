@@ -1,4 +1,4 @@
-from devices.hp53131a import HP53131A
+from devices import HP53131A
 from adapters.gpib_adapter import PrologixGPIBEthernet
 from adapters.pyvisa_adapter import PyVisaAdapter
 
