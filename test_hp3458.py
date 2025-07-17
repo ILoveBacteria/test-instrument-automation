@@ -93,7 +93,7 @@ def main():
     # test_2wire_ohms(device)
     # test_frequency_high_resolution(device)
     # test_frequency_low_resolution(device)
-    # print(device.get_error())
+    # print(device.error())
 
 
 if __name__ == "__main__":

@@ -1,5 +1,3 @@
-import time
-
 from devices.base import Instrument
 
 
@@ -17,6 +15,7 @@ class HP3458A(Instrument):
     def beep(self):
         self.send_command('BEEP')
         
+    # TODO: Remove this function after testing new ones.
     def measure_voltage(self, reading_times: int = 1, interval: float = 1.0):
         """
         Args:
@@ -37,7 +36,7 @@ class HP3458A(Instrument):
         self.send_command('MEM FIFO') 
         
     def reading_counts(self):
-        self.send_command('MCOUNT?')
+        return self.query('MCOUNT?')
         
     def temperature(self):
         """
@@ -46,7 +45,7 @@ class HP3458A(Instrument):
         """
         return self.query('TEMP?')
         
-    def get_error(self):
+    def error(self):
         """
         Reads the error string from the instrument.
         Example response: 0,"NO ERROR" or 102,"TRIGGER TOO FAST"
@@ -57,36 +56,54 @@ class HP3458A(Instrument):
         if len(message) > 75:
             raise ValueError("Display message cannot exceed 75 characters.")
         self.send_command(f'DISP MSG,"{message}"')
-        
-    def wait_for_data(self, timeout=5):
-        """Poll the instrument until data is ready (bit 7 set)."""
-        start = time.time()
-        while True:
-            # send(sock, '++spoll')  # Serial Poll
-            # status = read(sock)
-            self.send_command('++spoll')
-            status = self.read_response()
-            print(status)
-            status_byte = int(status)
-            if status_byte & 0b10000000:  # Check bit 7 (data ready)
-                return True
-            if (time.time() - start) > timeout:
-                raise TimeoutError('Timeout waiting for data ready')
-            time.sleep(0.1)
 
     def get_reading(self):
         """Triggers a single reading and returns the value."""
         self.send_command('TRIG SGL') # Trigger reading
         return float(self.read_response())
     
-    # --- Filter and Private Helper Functions ---
+    # --- Helper & Configuration Functions ---
+    # TODO: Implement interrupt before reading.
 
     def set_filter(self, enable=True):
         """Enables/disables the low-pass filter with the -3dB point at 75kHz."""
-        if enable:
-            self.send_command('LFILTER ON')
+        self.send_command('LFILTER ON' if enable else 'LFILTER OFF')
+
+    # TODO: test this function. Is SGL also hold?
+    def set_triggering(self, source='SGL', arm_source='AUTO'):
+        """
+        Sets the trigger and trigger arming source.
+
+        Args:
+            source (str): The trigger event source. Common values:
+                          'SGL' (single software trigger), 'EXT' (external),
+                          'HOLD' (wait for TRIG command). Defaults to 'SGL'.
+            arm_source (str): The event that arms the trigger. Common values:
+                              'AUTO', 'SGL', 'EXT', 'HOLD'. Defaults to 'AUTO'.
+        
+        SCPI Commands: TARM, TRIG
+        """
+        self.send_command(f'TARM {arm_source}')
+        self.send_command(f'TRIG {source}')
+
+    # TODO: test this. I think it needs MEM FIFO enabled.
+    def set_reading_burst(self, count: int, interval: float = None):
+        """
+        Configures the instrument to take a burst of readings.
+
+        Args:
+            count (int): The number of readings to take per trigger.
+            interval (float, optional): The time interval between readings in seconds.
+                                        If provided, the sample event is set to TIMER.
+                                        Defaults to None, which uses AUTO event.
+        
+        SCPI Commands: NRDGS, TIMER
+        """
+        if interval:
+            self.send_command(f'TIMER {interval}')
+            self.send_command(f'NRDGS {count},TIMER')
         else:
-            self.send_command('LFILTER OFF')
+            self.send_command(f'NRDGS {count},AUTO')
 
     def __set_range(self, mrange: float | None, nplc: float):
         if mrange is None:
@@ -166,8 +183,6 @@ class HP3458A(Instrument):
         self.__set_range(mrange, nplc)
         self.__autoZero(AutoZero)
         self.__ocomp(OffsetCompensation)
-
-    # --- New Configuration Functions ---
         
     def conf_function_FREQ(self, mrange='AUTO', gate_time=1.0):
         """
@@ -219,5 +234,34 @@ class HP3458A(Instrument):
         self.send_command('NDIG 6')
         self.send_command('TRIG SGL')
         self.__set_range(mrange, nplc)
-        self.__autoZero(True)  # Autozero is recommended for DC accuracy
+        self.__autoZero(True)
         self.__hiZ(HiZ)
+
+    # TODO: Test this function.
+    def conf_function_digitize(self, mode='DSDC', mrange=10, delay=0, num_samples=1024, sample_interval=100e-9):
+        """
+        Configures the meter for high-speed digitizing using the track-and-hold circuit.
+
+        Args:
+            mode (str): 'DSDC' for AC+DC sampling, 'DSAC' for AC-only. Defaults to 'DSDC'.
+            mrange (float): The measurement range (e.g., 10 for 10V). Defaults to 10.
+            delay (float): Delay in seconds between trigger and first sample. Defaults to 0.
+            num_samples (int): The total number of samples to take. Defaults to 1024.
+            sample_interval (float): The time interval between samples in seconds. Defaults to 100e-9.
+        
+        SCPI Commands: PRESET DIG, DSDC/DSAC, RANGE, DELAY, SWEEP
+        """
+        if mode.upper() not in ['DSDC', 'DSAC']:
+            raise ValueError("Mode must be 'DSDC' or 'DSAC'.")
+        
+        self.send_command('PRESET DIG') # Use the digitizing preset
+        self.send_command(mode.upper())
+        self.send_command(f'RANGE {mrange}')
+        if delay > 0:
+            self.send_command(f'DELAY {delay}')
+        
+        # SWEEP command sets the sample interval and number of samples
+        self.send_command(f'SWEEP {sample_interval}, {num_samples}')
+        
+        # After configuration, the meter will wait for a trigger.
+        # Use set_triggering() to define the trigger source.

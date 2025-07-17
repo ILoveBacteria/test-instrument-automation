@@ -83,7 +83,7 @@ else:
                     temp = st.session_state.instrument.temperature()
                     st.metric('Internal Temperature', f'{temp}°C')
                 if st.button('Check for Errors'):
-                    error = st.session_state.instrument.get_error()
+                    error = st.session_state.instrument.error()
                     st.info(f'Error Status: {error}')
 
         with col2:

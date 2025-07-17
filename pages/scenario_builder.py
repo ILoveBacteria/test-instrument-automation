@@ -15,7 +15,7 @@ INSTRUMENT_FUNCTIONS = {
         'get_reading': {},
         'beep': {},
         'temperature': {},
-        'get_error': {},
+        'error': {},
         'reset': {}
     },
     'HP53131A': {

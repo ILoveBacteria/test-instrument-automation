@@ -3,6 +3,7 @@ import time
 from devices.base import Instrument
 
 
+# TODO: implement an error function. Maybe it is better to add to father class. error()
 class HP53131A(Instrument):
     """
     Driver for the Agilent/HP 53131A Universal Counter.
