@@ -2,8 +2,7 @@ from devices.hp3458a import HP3458A
 from devices.hp53131a import HP53131A
 from devices.base import Instrument
 from adapters.gpib_adapter import PrologixGPIBEthernet
-from core.parser import ScenarioParser
-from core.executor import ScenarioExecutor
+from test.parser import ScenarioParser
 
 import time
 
@@ -32,18 +31,7 @@ def test_parsing():
     parser = ScenarioParser('scenario.yaml', 'schema/schema.json')
     scenario = parser.parse()
     print(scenario)
-    
 
-def test_executing():
-    parser = ScenarioParser('scenario.yaml', 'schema/schema.json')
-    scenario = parser.parse()
-    print(scenario)
-    
-    adapter = PrologixGPIBEthernet('10.22.68.20', address=scenario.address, prologix_read_timeout=0.5, socket_read_timeout=10)
-    hp3458a = HP3458A(name='hp3458a', adapter=adapter)
-    hp3458a.setup()
-    executor = ScenarioExecutor(scenario, hp3458a)
-    executor.execute()
     
 def test_counter():
     adapter = PrologixGPIBEthernet('10.22.68.20', address=3, prologix_read_timeout=0.5, socket_read_timeout=5)
