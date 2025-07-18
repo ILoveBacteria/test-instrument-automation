@@ -1,4 +1,4 @@
-from devices.base import Instrument
+from devices import Instrument
 
 
 class HP3458A(Instrument):

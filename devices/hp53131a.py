@@ -1,6 +1,6 @@
 import time
 
-from devices.base import Instrument
+from devices import Instrument
 
 
 class HP53131A(Instrument):
