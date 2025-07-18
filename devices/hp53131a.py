@@ -50,18 +50,20 @@ class HP53131A(Instrument):
             if time.time() - start_time > timeout_sec:
                 raise TimeoutError("Timeout waiting for operation to complete.")
             time.sleep(0.1)
+        # Clear status registers after a successful wait to prepare for the next operation
         self.clear()
 
-    def _measure_single_shot(self) -> float:
+    def _execute_and_fetch(self) -> float:
         """
-        Private helper to configure, initiate, wait, and fetch a single measurement.
+        Private helper to initiate, wait for, and fetch a single measurement result
+        after the instrument has been configured.
         
         Returns:
             The measured value as a float.
         """
-        # Enable the Operation Complete bit to be summarized in the Status Byte
+        # Enable the Operation Complete bit (1) to be summarized in the Status Byte
         self.send_command('*ESE 1')
-        # Enable the Status Byte summary to assert SRQ
+        # Enable the Status Byte summary (bit 5, weight 32) to assert SRQ
         self.send_command('*SRE 32')
         # Initiate the measurement
         self.send_command(':INIT')
@@ -152,7 +154,7 @@ class HP53131A(Instrument):
         """
         conf_cmd = f":CONF:FREQ {expected_value},{resolution},(@{channel})"
         self.send_command(conf_cmd)
-        return self._measure_single_shot()
+        return self._execute_and_fetch()
 
     def measure_period(self, channel: int = 1, expected_value: str = 'DEF', resolution: str = 'DEF') -> float:
         """
@@ -161,14 +163,16 @@ class HP53131A(Instrument):
         Args:
             channel: The input channel (1, 2, or 3 if option installed).
             expected_value: The approximate expected period (e.g., '100ns'). DEF for default.
-            resolution: The desired resolution (e.g., '1ns'). DEF for default.
+            resolution: The desired resolution. Setting a higher resolution (e.g., more digits)
+                        forces the counter to measure over a longer gate time, effectively
+                        averaging the measurement over more cycles of the input signal.
             
         Returns:
             The measured period in seconds.
         """
         conf_cmd = f":CONF:PER {expected_value},{resolution},(@{channel})"
         self.send_command(conf_cmd)
-        return self._measure_single_shot()
+        return self._execute_and_fetch()
 
     def measure_time_interval(self) -> float:
         """
@@ -178,9 +182,8 @@ class HP53131A(Instrument):
         Returns:
             The measured time interval in seconds.
         """
-        conf_cmd = ":CONF:TINT (@1),(@2)"
-        self.send_command(conf_cmd)
-        return self._measure_single_shot()
+        self.send_command(":CONF:TINT (@1),(@2)")
+        return self._execute_and_fetch()
 
     def measure_time_interval_edge_to_edge(self, start_edge: str, stop_edge: str) -> float:
         """
@@ -201,7 +204,6 @@ class HP53131A(Instrument):
             :INITiate
             :FETCh?
         """
-        # Validate input parameters
         valid_edges = ['POS', 'NEG']
         start_edge_upper = start_edge.upper()
         stop_edge_upper = stop_edge.upper()
@@ -216,7 +218,7 @@ class HP53131A(Instrument):
         # 2. Set the specific slopes for the start and stop events.
         self.send_command(f":SENS:EVEN1:SLOP {start_edge_upper}")
         self.send_command(f":SENS:EVEN2:SLOP {stop_edge_upper}")
-        return self._measure_single_shot()
+        return self._execute_and_fetch()
 
     def measure_period_average(self, channel: int, num_averages: int) -> float:
         """
@@ -237,15 +239,12 @@ class HP53131A(Instrument):
         
         # Initiate the block of measurements
         self.send_command(':INIT')
-        self._wait_for_opc(timeout_sec=30) # Use a longer timeout for averages
-        
-        # Fetch the calculated mean
+        self._wait_for_opc(timeout_sec=30)
         result = self.query(":CALC3:DATA?")
         
         # Clean up by disabling statistics mode
         self.send_command(":CALC3:AVER:STAT OFF")
         self.send_command(":TRIG:COUN:AUTO OFF")
-        
         return float(result)
 
     def measure_time_interval_average(self, num_averages: int) -> float:
@@ -266,12 +265,10 @@ class HP53131A(Instrument):
         
         self.send_command(':INIT')
         self._wait_for_opc(timeout_sec=30)
-        
         result = self.query(":CALC3:DATA?")
         
         self.send_command(":CALC3:AVER:STAT OFF")
         self.send_command(":TRIG:COUN:AUTO OFF")
-        
         return float(result)
 
     # --- Totalizer (Counter) Functions ---
@@ -279,6 +276,9 @@ class HP53131A(Instrument):
     def start_totalize(self, channel: int = 1):
         """
         Configures and starts a continuous event count (totalizer) on a channel.
+        This function always starts a new count from zero. The instrument does not
+        support pausing and resuming a hardware count.
+        
         Use stop_and_fetch_totalize() to stop and get the result.
         
         Args:
@@ -310,3 +310,24 @@ class HP53131A(Instrument):
         self.send_command(":ABORt")
         result = self.query(":FETCH?")
         return int(float(result))
+
+    def measure_totalize_timed(self, gate_time: float, channel: int = 1) -> int:
+        """
+        Counts events on a channel for a specified duration (gate time).
+
+        Args:
+            gate_time (float): The duration in seconds for which to count events.
+            channel (int): The channel to count events on (1 or 2).
+
+        Returns:
+            The total number of events counted during the gate time.
+        
+        SCPI Command: :CONFigure:TOTalize:TIMed <gate_time>,(@<channel>)
+        """
+        if channel not in [1, 2]:
+            raise ValueError("Channel must be 1 or 2.")
+            
+        conf_cmd = f":CONF:TOT:TIM {gate_time},(@{channel})"
+        self.send_command(conf_cmd)
+        result = self._execute_and_fetch()
+        return int(result)
