@@ -74,6 +74,23 @@ class HP53131A(Instrument):
         return float(response)
 
     # --- Configuration Functions ---
+    # TODO: Test this function.
+    def set_input_coupling(self, channel: int, coupling: str):
+        """
+        Sets the input coupling for a specified channel.
+
+        Args:
+            channel (int): The input channel (1 or 2).
+            coupling (str): The coupling type, 'AC' or 'DC'.
+        
+        SCPI Command: :INPut[1|2]:COUPling <value>
+        """
+        if channel not in [1, 2]:
+            raise ValueError("Channel must be 1 or 2.")
+        coupling_upper = coupling.upper()
+        if coupling_upper not in ['AC', 'DC']:
+            raise ValueError("Coupling must be 'AC' or 'DC'.")
+        self.send_command(f':INP{channel}:COUP {coupling_upper}')
 
     def set_attenuation(self, channel: int, attenuation_x: int):
         """
@@ -94,17 +111,28 @@ class HP53131A(Instrument):
     def set_trigger_level_volts(self, channel: int, level: float):
         """
         Sets the trigger level to an absolute voltage. This disables auto-trigger.
-        
-        Args:
-            channel: The input channel (1 or 2).
-            level: The trigger level in Volts.
-            
-        SCPI Command: [:SENSe]:EVENt[1|2]:LEVel[:ABSolute] <level>
         """
         if channel not in [1, 2]:
             raise ValueError("Channel must be 1 or 2.")
-        # Setting the absolute level automatically disables auto-trigger
         self.send_command(f':SENS:EVEN{channel}:LEV:ABS {level}')
+
+    # TODO: Test this function.
+    def get_trigger_level_volts(self, channel: int) -> float:
+        """
+        Queries the currently configured absolute trigger level in Volts.
+
+        Args:
+            channel (int): The input channel (1 or 2).
+
+        Returns:
+            float: The trigger level in Volts.
+        
+        SCPI Command: [:SENSe]:EVENt[1|2]:LEVel[:ABSolute]?
+        """
+        if channel not in [1, 2]:
+            raise ValueError("Channel must be 1 or 2.")
+        response = self.query(f':SENS:EVEN{channel}:LEV:ABS?')
+        return float(response)
 
     def set_trigger_level_percent(self, channel: int, percent: float):
         """
@@ -127,6 +155,42 @@ class HP53131A(Instrument):
         self.send_command(f':SENS:EVEN{channel}:LEV:AUTO ON')
         self.send_command(f':SENS:EVEN{channel}:LEV:REL {percent}')
 
+    # TODO: Test this function.
+    def set_event_slope(self, channel: int, edge: str):
+        """
+        Sets the trigger slope for a specified event channel.
+
+        Args:
+            channel (int): The event channel (1 or 2).
+            edge (str): The trigger edge, 'POS' (positive/rising) or 'NEG' (negative/falling).
+        
+        SCPI Command: [:SENSe]:EVENt[1|2]:SLOPe <edge>
+        """
+        if channel not in [1, 2]:
+            raise ValueError("Channel must be 1 or 2.")
+        edge_upper = edge.upper()
+        if edge_upper not in ['POS', 'NEG']:
+            raise ValueError("Edge must be 'POS' or 'NEG'.")
+        self.send_command(f':SENS:EVEN{channel}:SLOP {edge_upper}')
+
+    # TODO: Test this function.
+    def set_time_interval_input_mode(self, mode: str):
+        """
+        Sets the input routing for Time Interval measurements.
+
+        Args:
+            mode (str): 'SEPARATE' to use Channel 1 for start and Channel 2 for stop.
+                        'COMMON' to use Channel 1 for both start and stop events.
+        
+        SCPI Command: [:SENSe]:EVENt2:FEED <source>
+        """
+        mode_upper = mode.upper()
+        if mode_upper not in ['COMMON', 'SEPARATE']:
+            raise ValueError("Mode must be 'COMMON' or 'SEPARATE'.")
+        
+        feed_source = 'INP1' if mode_upper == 'COMMON' else 'INP2'
+        self.send_command(f":SENS:EVEN2:FEED '{feed_source}'")
+
     def initiate_continuous(self, enabled: bool):
         """
         Enables or disables continuously initiated measurements.
@@ -142,7 +206,7 @@ class HP53131A(Instrument):
 
     def measure_frequency(self, channel: int = 1, expected_value: str = 'DEF', resolution: str = 'DEF') -> float:
         """
-        Measures the frequency on a specified channel.
+        Measures frequency using resolution-based arming.
         
         Args:
             channel: The input channel (1, 2, or 3 if option installed).
@@ -154,6 +218,29 @@ class HP53131A(Instrument):
         """
         conf_cmd = f":CONF:FREQ {expected_value},{resolution},(@{channel})"
         self.send_command(conf_cmd)
+        return self._execute_and_fetch()
+
+    # TODO: Test this function.
+    def measure_frequency_gated(self, gate_time: float, channel: int = 1) -> float:
+        """
+        Measures frequency using a specified gate time.
+
+        Args:
+            gate_time (float): The measurement gate time in seconds.
+            channel (int): The input channel (1, 2, or 3).
+
+        Returns:
+            The measured frequency in Hz.
+        
+        SCPI Commands:
+            :FUNCtion 'FREQ <channel>'
+            :FREQuency:ARM:STOP:SOURce TIMer
+            :FREQuency:ARM:STOP:TIMer <gate_time>
+        """
+        self.send_command(f":FUNC 'FREQ {channel}'")
+        self.send_command(":FREQ:ARM:STAR:SOUR IMM")
+        self.send_command(":FREQ:ARM:STOP:SOUR TIM")
+        self.send_command(f":FREQ:ARM:STOP:TIM {gate_time}")
         return self._execute_and_fetch()
 
     def measure_period(self, channel: int = 1, expected_value: str = 'DEF', resolution: str = 'DEF') -> float:
@@ -185,10 +272,11 @@ class HP53131A(Instrument):
         self.send_command(":CONF:TINT (@1),(@2)")
         return self._execute_and_fetch()
 
+    # TODO: Test this function.
     def measure_time_interval_edge_to_edge(self, start_edge: str, stop_edge: str) -> float:
         """
         Measures the time interval between a specified edge on Channel 1 (start)
-        and a specified edge on Channel 2 (stop).
+        and a specified edge on Channel 2 (stop). Assumes SEPARATE input mode.
 
         Args:
             start_edge: The edge for the start signal on Channel 1 ('POS' or 'NEG').
@@ -196,28 +284,10 @@ class HP53131A(Instrument):
 
         Returns:
             The measured time interval in seconds.
-            
-        SCPI Commands:
-            :CONFigure:TINTerval (@1),(@2)
-            [:SENSe]:EVENt1:SLOPe <edge>
-            [:SENSe]:EVENt2:SLOPe <edge>
-            :INITiate
-            :FETCh?
         """
-        valid_edges = ['POS', 'NEG']
-        start_edge_upper = start_edge.upper()
-        stop_edge_upper = stop_edge.upper()
-        
-        if start_edge_upper not in valid_edges or stop_edge_upper not in valid_edges:
-            raise ValueError("Edge arguments must be 'POS' or 'NEG'.")
-
-        # 1. Configure for a generic time interval measurement.
-        # This also resets related settings to defaults (like slope).
         self.send_command(":CONF:TINT (@1),(@2)")
-
-        # 2. Set the specific slopes for the start and stop events.
-        self.send_command(f":SENS:EVEN1:SLOP {start_edge_upper}")
-        self.send_command(f":SENS:EVEN2:SLOP {stop_edge_upper}")
+        self.set_event_slope(1, start_edge)
+        self.set_event_slope(2, stop_edge)
         return self._execute_and_fetch()
 
     def measure_period_average(self, channel: int, num_averages: int) -> float:
