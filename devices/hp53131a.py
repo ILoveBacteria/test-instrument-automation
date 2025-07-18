@@ -34,6 +34,7 @@ class HP53131A(Instrument):
         
     def clear(self):
         """Clears all event registers and the error queue."""
+        # TODO: Is it better to call adapter.clear() instead?
         self.send_command('*CLS')
         
     def error(self) -> str:
