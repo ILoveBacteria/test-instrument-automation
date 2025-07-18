@@ -34,3 +34,9 @@ class Instrument:
         Setup the instrument.
         """
         pass
+    
+    def error(self) -> str:
+        """
+        Get the error message from the instrument.
+        """
+        raise NotImplementedError("This method should be implemented by subclasses.")

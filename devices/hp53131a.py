@@ -3,7 +3,6 @@ import time
 from devices.base import Instrument
 
 
-# TODO: implement an error function. Maybe it is better to add to father class. error()
 class HP53131A(Instrument):
     """
     Driver for the Agilent/HP 53131A Universal Counter.
@@ -36,6 +35,17 @@ class HP53131A(Instrument):
     def clear(self):
         """Clears all event registers and the error queue."""
         self.send_command('*CLS')
+        
+    def error(self) -> str:
+        """
+        Queries the instrument for the last error message.
+        
+        Returns:
+            str: The error message, or 'No Error' if no errors are present.
+        
+        SCPI Command: :SYSTem:ERRor?
+        """
+        return self.query(':SYST:ERR?')
 
     def _wait_for_opc(self, timeout_sec: int = 10):
         """
