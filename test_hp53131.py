@@ -36,6 +36,16 @@ def test_frequency_resolution_control(counter):
     print(f"High Resolution Freq:    {freq_high_res:.4f} Hz")
 
 
+def test_frequency_gated(counter):
+    print("\nTesting Gated Frequency Measurement...")
+    freq = counter.measure_frequency_gated(gate_time=0.1, channel=1)
+    print(f"Low Gate Time Frequency: {freq / 1e6:.6f} MHz")
+
+    # High gate time (longer measurement)
+    freq_high_gate = counter.measure_frequency_gated(gate_time=5.0, channel=1)
+    print(f"High Gate Time Frequency: {freq_high_gate / 1e6:.6f} MHz")
+
+
 # Scenario 2: Trigger Level Control
 def test_frequency_dc_offset(counter):
     print("\nTesting Trigger Level Control...")
@@ -110,6 +120,7 @@ def main():
     # test_frequency(device)
     # test_period(device)
     # test_frequency_resolution_control(device)
+    # test_frequency_gated(device)
     # test_frequency_dc_offset(device)
     # test_phase_shift(device)
     # test_rise_to_fall_edge(device)

@@ -114,7 +114,7 @@ class HP53131A(Instrument):
         return float(response)
 
     # --- Configuration Functions ---
-    # TODO: Test this function.
+    # TODO: All configuration functions Need to be set in every high-level measurement function.
     def set_input_coupling(self, channel: int, coupling: str):
         """
         Sets the input coupling for a specified channel.
@@ -156,7 +156,6 @@ class HP53131A(Instrument):
             raise ValueError("Channel must be 1 or 2.")
         self.send_command(f':SENS:EVEN{channel}:LEV:ABS {level}')
 
-    # TODO: Test this function.
     def get_trigger_level_volts(self, channel: int) -> float:
         """
         Queries the currently configured absolute trigger level in Volts.
@@ -212,7 +211,6 @@ class HP53131A(Instrument):
             raise ValueError("Edge must be 'POS' or 'NEG'.")
         self.send_command(f':SENS:EVEN{channel}:SLOP {edge_upper}')
 
-    # TODO: Test this function.
     def set_time_interval_input_mode(self, mode: str):
         """
         Sets the input routing for Time Interval measurements.
@@ -259,7 +257,6 @@ class HP53131A(Instrument):
         self.send_command(conf_cmd)
         return self._execute_and_fetch()
 
-    # TODO: Test this function.
     def measure_frequency_gated(self, gate_time: float, channel: int = 1) -> float:
         """
         Measures frequency using a specified gate time.
