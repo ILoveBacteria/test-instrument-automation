@@ -59,14 +59,14 @@ def test_frequency_dc_offset(counter):
 def test_phase_shift(counter):
     print("\nTesting Time Interval (Phase Shift)...")
     # Measure time from rising edge on Ch1 to rising edge on Ch2
-    ti_pos_pos = counter.measure_time_interval_edge_to_edge(start_edge='POS', stop_edge='POS')
+    ti_pos_pos = counter.measure_time_interval(start_edge='POS', stop_edge='POS')
     print(f"Rising-to-Rising (90 deg shift): {ti_pos_pos * 1e9:.1f} ns")
     
 
 def test_rise_to_fall_edge(counter):
     print("\nTesting Time Interval (Pulse Width)...")
     # Measure time from the rising edge (start) to the falling edge (stop) of the same signal
-    pulse_width = counter.measure_time_interval_edge_to_edge(start_edge='POS', stop_edge='NEG')
+    pulse_width = counter.measure_time_interval(start_edge='POS', stop_edge='NEG')
     print(f"Positive Pulse Width (25% duty): {pulse_width * 1e9:.1f} ns")
     
     

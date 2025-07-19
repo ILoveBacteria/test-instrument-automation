@@ -83,6 +83,36 @@ class HP53131A(Instrument):
         response = self.query(':FETCH?')
         return float(response)
 
+    def _execute_and_fetch_average(self, num_averages: int) -> float:
+        """
+        Private helper to initiate, wait for, and fetch an average measurement result
+        after the instrument has been configured.
+
+        Args:
+            num_averages (int): The number of measurements to average (2 to 1,000,000).
+
+        Returns:
+            The average measured value as a float.
+        """
+        self.send_command(f":CALC3:AVER:COUN {num_averages}")
+        self.send_command(":CALC3:AVER:STAT ON")
+        self.send_command(":TRIG:COUN:AUTO ON")
+        self.send_command(":CALC3:AVER:TYPE MEAN")
+        
+        # Enable the Operation Complete bit (1) to be summarized in the Status Byte
+        self.send_command('*ESE 1')
+        # Enable the Status Byte summary (bit 5, weight 32) to assert SRQ
+        self.send_command('*SRE 32')
+        # Initiate the block of measurements
+        self.send_command(':INIT')
+        self._wait_for_opc(timeout_sec=30)
+        response = self.query(":CALC3:DATA?")
+        
+        # Clean up by disabling statistics mode
+        self.send_command(":CALC3:AVER:STAT OFF")
+        self.send_command(":TRIG:COUN:AUTO OFF")
+        return float(response)
+
     # --- Configuration Functions ---
     # TODO: Test this function.
     def set_input_coupling(self, channel: int, coupling: str):
@@ -271,19 +301,8 @@ class HP53131A(Instrument):
         self.send_command(conf_cmd)
         return self._execute_and_fetch()
 
-    def measure_time_interval(self) -> float:
-        """
-        Measures the time interval between a start event on Channel 1 and a stop event on Channel 2.
-        By default, this measures the time between the rising edge on Ch1 and the rising edge on Ch2.
-        
-        Returns:
-            The measured time interval in seconds.
-        """
-        self.send_command(":CONF:TINT (@1),(@2)")
-        return self._execute_and_fetch()
-
     # TODO: Test this function.
-    def measure_time_interval_edge_to_edge(self, start_edge: str, stop_edge: str) -> float:
+    def measure_time_interval(self, start_edge: str = 'POS', stop_edge: str = 'POS') -> float:
         """
         Measures the time interval between a specified edge on Channel 1 (start)
         and a specified edge on Channel 2 (stop). Assumes SEPARATE input mode.
@@ -312,23 +331,7 @@ class HP53131A(Instrument):
             The average period in seconds.
         """
         self.send_command(f":CONF:PER DEF,DEF,(@{channel})")
-        self.send_command(f":CALC3:AVER:COUN {num_averages}")
-        self.send_command(":CALC3:AVER:STAT ON")
-        self.send_command(":TRIG:COUN:AUTO ON")
-        self.send_command(":CALC3:AVER:TYPE MEAN")
-        
-        # Enable the Operation Complete bit (1) to be summarized in the Status Byte
-        self.send_command('*ESE 1')
-        # Enable the Status Byte summary (bit 5, weight 32) to assert SRQ
-        self.send_command('*SRE 32')
-        # Initiate the block of measurements
-        self.send_command(':INIT')
-        self._wait_for_opc(timeout_sec=30)
-        result = self.query(":CALC3:DATA?")
-        
-        # Clean up by disabling statistics mode
-        self.send_command(":CALC3:AVER:STAT OFF")
-        self.send_command(":TRIG:COUN:AUTO OFF")
+        result = self._execute_and_fetch_average(num_averages)
         return float(result)
 
     def measure_time_interval_average(self, num_averages: int) -> float:
@@ -342,22 +345,7 @@ class HP53131A(Instrument):
             The average time interval in seconds.
         """
         self.send_command(":CONF:TINT (@1),(@2)")
-        self.send_command(f":CALC3:AVER:COUN {num_averages}")
-        self.send_command(":CALC3:AVER:STAT ON")
-        self.send_command(":TRIG:COUN:AUTO ON")
-        self.send_command(":CALC3:AVER:TYPE MEAN")
-        
-        # Enable the Operation Complete bit (1) to be summarized in the Status Byte
-        self.send_command('*ESE 1')
-        # Enable the Status Byte summary (bit 5, weight 32) to assert SRQ
-        self.send_command('*SRE 32')
-        # Initiate the block of measurements
-        self.send_command(':INIT')
-        self._wait_for_opc(timeout_sec=30)
-        result = self.query(":CALC3:DATA?")
-        
-        self.send_command(":CALC3:AVER:STAT OFF")
-        self.send_command(":TRIG:COUN:AUTO OFF")
+        result = self._execute_and_fetch_average(num_averages)
         return float(result)
 
     # --- Totalizer (Counter) Functions ---
