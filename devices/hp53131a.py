@@ -195,7 +195,6 @@ class HP53131A(Instrument):
         self.send_command(f':SENS:EVEN{channel}:LEV:AUTO ON')
         self.send_command(f':SENS:EVEN{channel}:LEV:REL {percent}')
 
-    # TODO: Test this function.
     def set_event_slope(self, channel: int, edge: str):
         """
         Sets the trigger slope for a specified event channel.
@@ -301,8 +300,7 @@ class HP53131A(Instrument):
         self.send_command(conf_cmd)
         return self._execute_and_fetch()
 
-    # TODO: Test this function.
-    def measure_time_interval(self, start_edge: str = 'POS', stop_edge: str = 'POS') -> float:
+    def measure_time_interval(self, start_edge: str = 'POS', stop_edge: str = 'POS', input_mode: str = 'SEPARATE') -> float:
         """
         Measures the time interval between a specified edge on Channel 1 (start)
         and a specified edge on Channel 2 (stop). Assumes SEPARATE input mode.
@@ -310,11 +308,13 @@ class HP53131A(Instrument):
         Args:
             start_edge: The edge for the start signal on Channel 1 ('POS' or 'NEG').
             stop_edge: The edge for the stop signal on Channel 2 ('POS' or 'NEG').
+            input_mode: The input mode for time interval measurement ('SEPARATE' or 'COMMON').
 
         Returns:
             The measured time interval in seconds.
         """
         self.send_command(":CONF:TINT (@1),(@2)")
+        self.set_time_interval_input_mode(input_mode)
         self.set_event_slope(1, start_edge)
         self.set_event_slope(2, stop_edge)
         return self._execute_and_fetch()
@@ -334,17 +334,23 @@ class HP53131A(Instrument):
         result = self._execute_and_fetch_average(num_averages)
         return float(result)
 
-    def measure_time_interval_average(self, num_averages: int) -> float:
+    def measure_time_interval_average(self, num_averages: int, start_edge: str = 'POS', stop_edge: str = 'POS', input_mode: str = 'SEPARATE') -> float:
         """
         Measures the average time interval over a specified number of measurements.
         
         Args:
             num_averages: The number of measurements to average (2 to 1,000,000).
+            start_edge: The edge for the start signal on Channel 1 ('POS' or 'NEG').
+            stop_edge: The edge for the stop signal on Channel 2 ('POS' or 'NEG').
+            input_mode: The input mode for time interval measurement ('SEPARATE' or 'COMMON').
             
         Returns:
             The average time interval in seconds.
         """
         self.send_command(":CONF:TINT (@1),(@2)")
+        self.set_time_interval_input_mode(input_mode)
+        self.set_event_slope(1, start_edge)
+        self.set_event_slope(2, stop_edge)
         result = self._execute_and_fetch_average(num_averages)
         return float(result)
 
