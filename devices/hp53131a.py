@@ -317,6 +317,10 @@ class HP53131A(Instrument):
         self.send_command(":TRIG:COUN:AUTO ON")
         self.send_command(":CALC3:AVER:TYPE MEAN")
         
+        # Enable the Operation Complete bit (1) to be summarized in the Status Byte
+        self.send_command('*ESE 1')
+        # Enable the Status Byte summary (bit 5, weight 32) to assert SRQ
+        self.send_command('*SRE 32')
         # Initiate the block of measurements
         self.send_command(':INIT')
         self._wait_for_opc(timeout_sec=30)
@@ -343,6 +347,11 @@ class HP53131A(Instrument):
         self.send_command(":TRIG:COUN:AUTO ON")
         self.send_command(":CALC3:AVER:TYPE MEAN")
         
+        # Enable the Operation Complete bit (1) to be summarized in the Status Byte
+        self.send_command('*ESE 1')
+        # Enable the Status Byte summary (bit 5, weight 32) to assert SRQ
+        self.send_command('*SRE 32')
+        # Initiate the block of measurements
         self.send_command(':INIT')
         self._wait_for_opc(timeout_sec=30)
         result = self.query(":CALC3:DATA?")
