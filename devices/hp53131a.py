@@ -34,7 +34,6 @@ class HP53131A(Instrument):
         
     def clear(self):
         """Clears all event registers and the error queue."""
-        # TODO: Is it better to call adapter.clear() instead?
         self.send_command('*CLS')
         
     def error(self) -> str:
@@ -354,25 +353,20 @@ class HP53131A(Instrument):
 
     # --- Totalizer (Counter) Functions ---
 
-    def start_totalize(self, channel: int = 1):
+    def start_totalize(self):
         """
         Configures and starts a continuous event count (totalizer) on a channel.
         This function always starts a new count from zero. The instrument does not
         support pausing and resuming a hardware count.
         
         Use stop_and_fetch_totalize() to stop and get the result.
-        
-        Args:
-            channel: The channel to count events on (1 or 2).
             
         SCPI Commands:
             :CONFigure:TOTalize:CONTinuous (@<channel>)
             :INITiate
         """
-        if channel not in [1, 2]:
-            raise ValueError("Channel must be 1 or 2.")
         # This configures for a manually gated (start/stop) totalize measurement
-        self.send_command(f":CONF:TOT:CONT (@{channel})")
+        self.send_command(f":CONF:TOT:CONT")
         # This starts the counting
         self.send_command(":INIT")
 
@@ -392,23 +386,19 @@ class HP53131A(Instrument):
         result = self.query(":FETCH?")
         return int(float(result))
 
-    def measure_totalize_timed(self, gate_time: float, channel: int = 1) -> int:
+    def measure_totalize_timed(self, gate_time: float) -> int:
         """
         Counts events on a channel for a specified duration (gate time).
 
         Args:
             gate_time (float): The duration in seconds for which to count events.
-            channel (int): The channel to count events on (1 or 2).
 
         Returns:
             The total number of events counted during the gate time.
         
         SCPI Command: :CONFigure:TOTalize:TIMed <gate_time>,(@<channel>)
         """
-        if channel not in [1, 2]:
-            raise ValueError("Channel must be 1 or 2.")
-            
-        conf_cmd = f":CONF:TOT:TIM {gate_time},(@{channel})"
+        conf_cmd = f":CONF:TOT:TIM {gate_time}"
         self.send_command(conf_cmd)
         result = self._execute_and_fetch()
         return int(result)

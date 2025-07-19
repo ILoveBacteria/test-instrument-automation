@@ -90,10 +90,18 @@ def test_period_interval_averaging(counter):
 def test_totalizer(counter):
     print("\nTesting Totalizer (Counter)...")
     print("Setting FG to 100 kHz.")
-    counter.start_totalize(channel=1)
+    counter.start_totalize()
     print("Counting events for exactly 1.0 second...")
     time.sleep(1.0)
     count = counter.stop_and_fetch_totalize()
+    print(f"Total events counted: {count}")
+   
+    
+def test_time_based_totalizer(counter):
+    print("\nTesting Time-Based Totalizer...")
+    print("Setting FG to 1 kHz.")
+    print("Counting events for exactly 1.0 second...")
+    count = counter.measure_totalize_timed(gate_time=1.0)
     print(f"Total events counted: {count}")
 
 
@@ -107,6 +115,7 @@ def main():
     # test_rise_to_fall_edge(device)
     # test_period_interval_averaging(device)
     # test_totalizer(device)
+    # test_time_based_totalizer(device)
 
 
 if __name__ == "__main__":
