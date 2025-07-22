@@ -57,16 +57,16 @@ class HP3458A(Instrument):
         """Enables/disables the low-pass filter with the -3dB point at 75kHz."""
         self.send_command('LFILTER ON' if enable else 'LFILTER OFF')
 
-    def set_triggering(self, source='SGL', arm_source='AUTO'):
+    def __set_triggering(self, source, arm_source):
         """
         Sets the trigger and trigger arming source.
 
         Args:
             source (str): The trigger event source. Common values:
                           'SGL' (single software trigger), 'EXT' (external),
-                          'HOLD' (wait for TRIG command). Defaults to 'SGL'.
+                          'HOLD' (wait for TRIG command).
             arm_source (str): The event that arms the trigger. Common values:
-                              'AUTO', 'SGL', 'EXT', 'HOLD'. Defaults to 'AUTO'.
+                              'AUTO', 'SGL', 'EXT', 'HOLD'.
         
         SCPI Commands: TARM, TRIG
         """
@@ -119,52 +119,55 @@ class HP3458A(Instrument):
                           HiZ=False, 
                           OffsetCompensation=False, 
                           count=1,
-                          interval=None):
+                          interval=None,
+                          source='HOLD', 
+                          arm_source='AUTO'):
         self.send_command('NDIG 6')
         self.__set_range(mrange, nplc)
         self.__autoZero(AutoZero)
         self.__hiZ(HiZ)
         self.__ocomp(OffsetCompensation)
         self.__set_reading_burst(count, interval)
+        self.__set_triggering(source, arm_source)
 
-    def conf_function_DCV(self, mrange=None, nplc=1, AutoZero=True, HiZ=False, count=1, interval=None):
+    def conf_function_DCV(self, mrange=None, nplc=1, AutoZero=True, HiZ=False, count=1, interval=None, source='HOLD', arm_source='AUTO'):
         """Configures the meter to measure DCV. If range=None the meter is set to Autorange."""
         self.send_command('PRESET NORM')
         self.send_command('DCV')
-        self._common_configure(mrange, nplc, AutoZero, HiZ, count, interval)
+        self._common_configure(mrange, nplc, AutoZero, HiZ, count, interval, source, arm_source)
 
-    def conf_function_DCI(self, mrange=None, nplc=1, AutoZero=True, HiZ=False, count=1, interval=None):
+    def conf_function_DCI(self, mrange=None, nplc=1, AutoZero=True, HiZ=False, count=1, interval=None, source='HOLD', arm_source='AUTO'):
         """Configures the meter to measure DCI. If range=None the meter is set to Autorange."""
         self.send_command('PRESET NORM')
         self.send_command('DCI')
-        self._common_configure(mrange, nplc, AutoZero, HiZ, count, interval)
+        self._common_configure(mrange, nplc, AutoZero, HiZ, count, interval, source, arm_source)
 
-    def conf_function_ACV(self, mrange=None, nplc=1, count=1, interval=None):
+    def conf_function_ACV(self, mrange=None, nplc=1, count=1, interval=None, source='HOLD', arm_source='AUTO'):
         """Configures the meter to measure ACV (True RMS). If range=None the meter is set to Autorange."""
         self.send_command('PRESET NORM')
         self.send_command('ACV')
         self.send_command('SETACV SYNC')
-        self._common_configure(mrange, nplc, count=count, interval=interval)
+        self._common_configure(mrange, nplc, count=count, interval=interval, source=source, arm_source=arm_source)
 
-    def conf_function_ACI(self, mrange=None, nplc=1, count=1, interval=None):
+    def conf_function_ACI(self, mrange=None, nplc=1, count=1, interval=None, source='HOLD', arm_source='AUTO'):
         """Configures the meter to measure ACI. If range=None the meter is set to Autorange."""
         self.send_command('PRESET NORM')
         self.send_command('ACI')
-        self._common_configure(mrange, nplc, count=count, interval=interval)
+        self._common_configure(mrange, nplc, count=count, interval=interval, source=source, arm_source=arm_source)
 
-    def conf_function_OHM2W(self, mrange=None, nplc=1, AutoZero=True, OffsetCompensation=False, count=1, interval=None):
+    def conf_function_OHM2W(self, mrange=None, nplc=1, AutoZero=True, OffsetCompensation=False, count=1, interval=None, source='HOLD', arm_source='AUTO'):
         """Configures the meter to measure OHM2W. If range=None the meter is set to Autorange."""
         self.send_command('PRESET NORM')
         self.send_command('OHM')
-        self._common_configure(mrange, nplc, AutoZero, OffsetCompensation, count=count, interval=interval)
+        self._common_configure(mrange, nplc, AutoZero, OffsetCompensation, count=count, interval=interval, source=source, arm_source=arm_source)
 
-    def conf_function_OHM4W(self, mrange=None, nplc=1, AutoZero=True, OffsetCompensation=False, count=1, interval=None):
+    def conf_function_OHM4W(self, mrange=None, nplc=1, AutoZero=True, OffsetCompensation=False, count=1, interval=None, source='HOLD', arm_source='AUTO'):
         """Configures the meter to measure OHM4W. If range=None the meter is set to Autorange."""
         self.send_command('PRESET NORM')
         self.send_command('OHMF')
-        self._common_configure(mrange, nplc, AutoZero, OffsetCompensation, count=count, interval=interval)
-        
-    def conf_function_FREQ(self, mrange='AUTO', gate_time=1.0):
+        self._common_configure(mrange, nplc, AutoZero, OffsetCompensation, count=count, interval=interval, source=source, arm_source=arm_source)
+
+    def conf_function_FREQ(self, mrange='AUTO', gate_time=1.0, count=1, interval=None, source='HOLD', arm_source='AUTO'):
         """
         Configures the meter to measure Frequency.
 
@@ -194,8 +197,11 @@ class HP3458A(Instrument):
         self.send_command('FSOURCE ACV')
         # Use the FUNC command for a concise setup
         self.send_command(f'FUNC FREQ, {range_param}, {resolution_param}')
+        self.send_command('NDIG 6')  # Set number of digits to 6
+        self.__set_reading_burst(count, interval)
+        self.__set_triggering(source, arm_source)
 
-    def conf_function_ACDCV(self, mrange=None, nplc=1, ac_bandwidth_low=20, HiZ=False):
+    def conf_function_ACDCV(self, mrange=None, nplc=1, ac_bandwidth_low=20, HiZ=False, count=1, interval=None, source='HOLD', arm_source='AUTO'):
         """
         Configures the meter to measure combined AC+DC Voltage (True RMS).
 
@@ -210,13 +216,10 @@ class HP3458A(Instrument):
         self.send_command('PRESET NORM')
         self.send_command('ACDCV')
         self.send_command(f'ACBAND {ac_bandwidth_low}')
-        self.send_command('NDIG 6')
-        self.__set_range(mrange, nplc)
-        self.__autoZero(True)
-        self.__hiZ(HiZ)
+        self._common_configure(mrange, nplc, AutoZero=True, HiZ=HiZ, count=count, interval=interval, source=source, arm_source=arm_source)
 
     # TODO: Test this function.
-    def conf_function_digitize(self, mode='DSDC', mrange=10, delay=0, num_samples=1024, sample_interval=100e-9):
+    def conf_function_digitize(self, mode='DSDC', mrange=10, delay=0, num_samples=1024, sample_interval=100e-9, source='HOLD', arm_source='AUTO'):
         """
         Configures the meter for high-speed digitizing using the track-and-hold circuit.
 
@@ -240,6 +243,5 @@ class HP3458A(Instrument):
         
         # SWEEP command sets the sample interval and number of samples
         self.send_command(f'SWEEP {sample_interval}, {num_samples}')
-        
         # After configuration, the meter will wait for a trigger.
-        # Use set_triggering() to define the trigger source.
+        self.__set_triggering(source, arm_source)
