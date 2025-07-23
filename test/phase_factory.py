@@ -3,10 +3,8 @@ from typing import Callable
 import openhtf as htf
 from openhtf.util import units
 
-from devices import Instrument
 
-
-def phase_factory(step_config: dict, instrument: Instrument) -> Callable:
+def phase_factory(function: Callable, comment: str = None, params: dict = None, measurement_config: dict = None) -> Callable:
     """
     Generate an OpenHTF test phase function from a step configuration and instrument.
 
@@ -17,35 +15,31 @@ def phase_factory(step_config: dict, instrument: Instrument) -> Callable:
     Returns:
         Callable: An OpenHTF-compatible test phase function, optionally decorated with measurement configuration.
     """
+    if comment is None:
+        comment = function.__name__
+    if params is None:
+        params = {}
+
     def dynamic_phase(test):
         """The actual phase logic that will be executed."""
-        # Get the instrument function name and parameters from the config.
-        func_name = step_config['function']
-        params = step_config.get('params', {})
-
-        # Get the corresponding method from our instrument plug.
-        instrument_method = getattr(instrument, func_name)
-
-        # Execute the instrument method.
-        result = instrument_method(**params)
-        print(f"PHASE '{step_config['comment']}': Executed '{func_name}', got result: {result}")
+        result = function(**params)
+        print(f"PHASE '{comment}': Executed '{function.__name__}', got result: {result}")
 
         # If this step includes a measurement, record it.
-        if 'measurement' in step_config:
-            measurement_name = step_config['measurement']['name']
+        if measurement_config:
+            measurement_name = measurement_config['name']
             test.measurements[measurement_name] = result
 
     # Set a descriptive name for the phase function for better logging.
-    dynamic_phase.name = step_config.get('comment', step_config['function'])
+    dynamic_phase.name = comment
 
     # If the step defines a measurement, dynamically create and attach it.
-    if 'measurement' in step_config:
-        meas_config = step_config['measurement']
-        measurement = htf.Measurement(meas_config['name'])
+    if measurement_config:
+        measurement = htf.Measurement(measurement_config['name'])
 
         # Dynamically set units if specified.
-        if 'units' in meas_config:
-            unit_name = meas_config['units']
+        if 'units' in measurement_config:
+            unit_name = measurement_config['units']
             # getattr is a safe way to get the unit type from the units module.
             if hasattr(units, unit_name):
                 measurement.with_units(getattr(units, unit_name))
@@ -53,8 +47,8 @@ def phase_factory(step_config: dict, instrument: Instrument) -> Callable:
                 print(f"Warning: Unit '{unit_name}' not found.")
 
         # Dynamically add validators.
-        if 'validators' in meas_config:
-            for validator_conf in meas_config['validators']:
+        if 'validators' in measurement_config:
+            for validator_conf in measurement_config['validators']:
                 if validator_conf['type'] == 'in_range':
                     measurement.in_range(
                         minimum=validator_conf.get('min'),
