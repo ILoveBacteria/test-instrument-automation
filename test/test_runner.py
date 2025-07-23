@@ -23,7 +23,8 @@ class TestRunner:
 
     def run_test(self, host='localhost', port=10000):
         # Generate the list of phase functions from the configuration.
-        dynamic_phases = [phase_factory(step, self.instrument) for step in self.test_config['steps']]
+        Instrument_function = getattr(self.instrument, self.test_config['function'])
+        dynamic_phases = [phase_factory(Instrument_function, step.get('comment'), step.get('params'), step.get('measurement')) for step in self.test_config['steps']]
         test = htf.Test(
             *dynamic_phases,
             test_name=self.test_config['name'],
