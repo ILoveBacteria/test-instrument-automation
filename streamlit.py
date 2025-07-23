@@ -8,6 +8,51 @@ from devices.hp3458a import HP3458A
 from devices.hp53131a import HP53131A
 
 
+# --- Status Panel Helper Functions ---
+def get_mock_status(instrument_name):
+    """Generates a dictionary of mock status values for a given instrument."""
+    if instrument_name == 'HP3458A':
+        return {
+            'Function': 'DCV',
+            'Error Occurred': 'No',
+            'Trigger Source': 'HOLD',
+            'Arm Source': 'AUTO',
+            'Burst Interval': '0.1s',
+            'Burst Count': 1,
+            'Range': 'Auto',
+            'NPLC': 10.0,
+            'Auto Zero': 'On'
+        }
+    elif instrument_name == 'HP53131A':
+        return {
+            'Error Occurred': 'No',
+            'Measurement': 'Frequency',
+            'Input Coupling': 'AC',
+            'Attenuation': '1x',
+            'Trigger Level': '1.25 V',
+            'Slope CH1': 'POS',
+            'Slope CH2': 'POS',
+            'Input Mode': 'SEPARATE'
+        }
+    return {}
+
+def display_status(status_dict):
+    """Renders the status dictionary in a grid layout."""
+    if not status_dict:
+        st.info('Status not available. Click refresh to fetch.')
+        return
+
+    st.subheader('Instrument Status')
+    
+    # Create columns with a max of 4 items per row
+    cols = st.columns(4)
+    col_idx = 0
+    for key, value in status_dict.items():
+        with cols[col_idx]:
+            st.metric(label=key, value=str(value))
+        col_idx = (col_idx + 1) % 4
+        
+
 # --- Streamlit UI ---
 st.set_page_config(layout='wide', page_title='Instrument Control Panel')
 st.title('Instrument Control Panel')
@@ -20,6 +65,8 @@ if 'measurement_data' not in st.session_state:
     st.session_state.measurement_data = pd.DataFrame(columns=['Time', 'Measurement'])
 if 'totalizer_running' not in st.session_state:
     st.session_state.totalizer_running = False
+if 'instrument_status' not in st.session_state:
+    st.session_state.instrument_status = None
 
 # --- Sidebar for Connection ---
 with st.sidebar:
@@ -31,6 +78,7 @@ with st.sidebar:
             st.session_state.instrument.adapter.close()
             st.session_state.instrument = None
             st.session_state.measurement_data = pd.DataFrame(columns=['Time', 'Measurement'])
+            st.session_state.instrument_status = None # Clear status on disconnect
             st.rerun()
     else:
         instrument_type = st.selectbox('Instrument', ['HP3458A', 'HP53131A'])
@@ -66,6 +114,21 @@ with st.sidebar:
 if not st.session_state.instrument:
     st.info('Please connect to an instrument using the sidebar.')
 else:
+    # --- Status Panel ---
+    status_container = st.container()
+    with status_container:
+        st.markdown('---')
+        
+        if st.button('Refresh Status'):
+            with st.spinner('Refreshing status...'):
+                st.session_state.instrument_status = get_mock_status(st.session_state.instrument.name)
+                st.rerun() # Rerun to display the new status immediately
+
+        # Display the cached status
+        display_status(st.session_state.instrument_status)
+        st.markdown('---')
+
+
     # --- Instrument Specific UI ---
     if isinstance(st.session_state.instrument, HP3458A):
         st.header('HP3458A Digital Multimeter')
