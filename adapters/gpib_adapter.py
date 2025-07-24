@@ -78,7 +78,7 @@ class PrologixGPIBEthernet(ProtocolAdapter):
         self._send('++read eoi')
         return self._recv(buffer_size)
 
-    def query(self, command: str, buffer_size: int = 1024) -> str:
+    def ask(self, command: str, buffer_size: int = 1024) -> str:
         """
         Send a command to the device and read the response.
 

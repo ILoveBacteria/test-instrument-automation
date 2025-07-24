@@ -19,19 +19,19 @@ class HPE4419B(Instrument):
         super().setup()
         self.reset()
         self.clear_status()
-        self.send_command('SYST:PRES')
+        self.write('SYST:PRES')
         
     def id(self) -> str:
         """Queries the instrument's identification string."""
-        return self.query('*IDN?')
+        return self.ask('*IDN?')
 
     def reset(self):
         """Resets the instrument to its factory default state."""
-        self.send_command('*RST')
+        self.write('*RST')
         
     def clear_status(self):
         """Clears all event registers and the error queue."""
-        self.send_command('*CLS')
+        self.write('*CLS')
 
     def error(self) -> str:
         """
@@ -40,7 +40,7 @@ class HPE4419B(Instrument):
         
         SCPI Command: SYSTem:ERRor?
         """
-        return self.query('SYST:ERR?')
+        return self.ask('SYST:ERR?')
 
     def _wait_for_opc(self, timeout_sec: int = 30):
         """
@@ -52,7 +52,7 @@ class HPE4419B(Instrument):
         start_time = time.time()
         # *OPC command enables the OPC bit in the Standard Event Status Register
         # to be set when all pending operations are finished.
-        self.send_command('*OPC')
+        self.write('*OPC')
         while not self.adapter.query_srq():
             if time.time() - start_time > timeout_sec:
                 raise TimeoutError("Timeout waiting for operation to complete.")
@@ -66,9 +66,9 @@ class HPE4419B(Instrument):
         after the instrument has been configured.
         """
         # Enable the Operation Complete bit (bit 0, weight 1)
-        self.send_command('*ESE 1')
+        self.write('*ESE 1')
         # Enable the Standard Event summary bit (bit 5, weight 32) to generate an SRQ
-        self.send_command('*SRE 32')
+        self.write('*SRE 32')
         # Initiate the measurement on the specified channel
         self.initiate_measurement(channel)
         # Wait for the measurement to finish using SRQ
@@ -87,7 +87,7 @@ class HPE4419B(Instrument):
             raise ValueError("Window must be 1 or 2.")
         if channel not in [1, 2]:
             raise ValueError("Channel must be 1 or 2.")
-        self.send_command(f'CALC{window}:MATH "(SENS{channel})"')
+        self.write(f'CALC{window}:MATH "(SENS{channel})"')
 
     def set_continuous_measurement(self, channel: int, enabled: bool):
         """
@@ -95,7 +95,7 @@ class HPE4419B(Instrument):
         """
         if channel not in [1, 2]:
             raise ValueError("Channel must be 1 or 2.")
-        self.send_command(f'INIT{channel}:CONT {int(enabled)}')
+        self.write(f'INIT{channel}:CONT {int(enabled)}')
 
     def set_measurement_units(self, window: int, unit: str):
         """
@@ -106,7 +106,7 @@ class HPE4419B(Instrument):
         unit_upper = unit.upper()
         if unit_upper not in ['W', 'DBM']:
             raise ValueError("Unit must be 'W' or 'DBM'.")
-        self.send_command(f'UNIT{window}:POW {unit_upper}')
+        self.write(f'UNIT{window}:POW {unit_upper}')
 
     # --- Calibration Functions ---
 
@@ -116,11 +116,11 @@ class HPE4419B(Instrument):
         """
         if channel not in [1, 2]:
             raise ValueError("Channel must be 1 or 2.")
-        self.send_command(f'CAL{channel}:ZERO:AUTO ONCE')
+        self.write(f'CAL{channel}:ZERO:AUTO ONCE')
         if wait_for_completion:
             # Setup status registers to wait for the operation to complete
-            self.send_command('*ESE 1') # Enable Operation Complete bit
-            self.send_command('*SRE 32') # Enable SRQ from Event Status bit
+            self.write('*ESE 1') # Enable Operation Complete bit
+            self.write('*SRE 32') # Enable SRQ from Event Status bit
             self._wait_for_opc()
 
     def calibrate_channel(self, channel: int, wait_for_completion: bool = True):
@@ -129,10 +129,10 @@ class HPE4419B(Instrument):
         """
         if channel not in [1, 2]:
             raise ValueError("Channel must be 1 or 2.")
-        self.send_command(f'CAL{channel}:AUTO ONCE')
+        self.write(f'CAL{channel}:AUTO ONCE')
         if wait_for_completion:
-            self.send_command('*ESE 1')
-            self.send_command('*SRE 32')
+            self.write('*ESE 1')
+            self.write('*SRE 32')
             self._wait_for_opc()
 
     def full_calibration_channel(self, channel: int) -> bool:
@@ -142,7 +142,7 @@ class HPE4419B(Instrument):
         """
         if channel not in [1, 2]:
             raise ValueError("Channel must be 1 or 2.")
-        response = self.query(f'CAL{channel}:ALL?')
+        response = self.ask(f'CAL{channel}:ALL?')
         return int(response.strip()) == 0
 
     # --- Measurement and Data Fetching ---
@@ -153,7 +153,7 @@ class HPE4419B(Instrument):
         """
         if channel not in [1, 2]:
             raise ValueError("Channel must be 1 or 2.")
-        self.send_command(f'INIT{channel}:IMM')
+        self.write(f'INIT{channel}:IMM')
 
     def fetch_measurement(self, window: int) -> float:
         """
@@ -161,7 +161,7 @@ class HPE4419B(Instrument):
         """
         if window not in [1, 2]:
             raise ValueError("Window must be 1 or 2.")
-        response = self.query(f'FETC{window}?')
+        response = self.ask(f'FETC{window}?')
         return float(response)
 
     def get_measurement(self, window: int) -> float:

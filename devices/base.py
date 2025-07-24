@@ -10,24 +10,24 @@ class Instrument:
         self.name = name
         self.adapter = adapter
 
-    def send_command(self, command: str):
+    def write(self, command: str):
         """
         Send a command to the instrument.
         """
         self.adapter.write(command)
 
-    def read_response(self, buffer_size: int = 1024) -> str:
+    def read(self, buffer_size: int = 1024) -> str:
         """
         Read a response from the instrument.
         """
         return self.adapter.read(buffer_size)
     
-    def query(self, command: str) -> str:
+    def ask(self, command: str) -> str:
         """
         Send a command and read the response.
         """
-        self.send_command(command)
-        return self.read_response()
+        self.write(command)
+        return self.read()
     
     def setup(self):
         """

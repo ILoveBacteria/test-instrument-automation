@@ -18,23 +18,23 @@ class HP53131A(Instrument):
         self.reset()
         self.clear()
         # Disable all bits in Service Request Enable register
-        self.send_command('*SRE 0')
+        self.write('*SRE 0')
         # Disable all bits in Standard Event Status Enable register
-        self.send_command('*ESE 0')
+        self.write('*ESE 0')
         # Preset the Operation and Questionable status registers
-        self.send_command(':STAT:PRES')
+        self.write(':STAT:PRES')
         
     def id(self) -> str:
         """Queries the instrument's identification string."""
-        return self.query('*IDN?')
+        return self.ask('*IDN?')
 
     def reset(self):
         """Resets the instrument to its factory default state."""
-        self.send_command('*RST')
+        self.write('*RST')
         
     def clear(self):
         """Clears all event registers and the error queue."""
-        self.send_command('*CLS')
+        self.write('*CLS')
         
     def error(self) -> str:
         """
@@ -45,7 +45,7 @@ class HP53131A(Instrument):
         
         SCPI Command: :SYSTem:ERRor?
         """
-        return self.query(':SYST:ERR?')
+        return self.ask(':SYST:ERR?')
     
     # --- Initiate and Reading
 
@@ -57,7 +57,7 @@ class HP53131A(Instrument):
         start_time = time.time()
         # *OPC command sets the OPC bit in the Standard Event Status Register
         # when all pending operations are finished.
-        self.send_command('*OPC')
+        self.write('*OPC')
         while not self.adapter.query_srq():
             if time.time() - start_time > timeout_sec:
                 raise TimeoutError("Timeout waiting for operation to complete.")
@@ -67,21 +67,21 @@ class HP53131A(Instrument):
         
     def initiate(self):
         # Enable the Operation Complete bit (1) to be summarized in the Status Byte
-        self.send_command('*ESE 1')
+        self.write('*ESE 1')
         # Enable the Status Byte summary (bit 5, weight 32) to assert SRQ
-        self.send_command('*SRE 32')
+        self.write('*SRE 32')
         # Initiate the measurement
-        self.send_command(':INIT')
+        self.write(':INIT')
         
     def fetch(self) -> float:
-        response = self.query(':FETCH?')
+        response = self.ask(':FETCH?')
         return float(response)
     
     def fetch_average(self) -> float:
-        response = self.query(":CALC3:DATA?")
+        response = self.ask(":CALC3:DATA?")
         # Clean up by disabling statistics mode
-        self.send_command(":CALC3:AVER:STAT OFF")
-        self.send_command(":TRIG:COUN:AUTO OFF")
+        self.write(":CALC3:AVER:STAT OFF")
+        self.write(":TRIG:COUN:AUTO OFF")
         return float(response)
 
     # --- Configuration Functions ---
@@ -100,7 +100,7 @@ class HP53131A(Instrument):
         coupling_upper = coupling.upper()
         if coupling_upper not in ['AC', 'DC']:
             raise ValueError("Coupling must be 'AC' or 'DC'.")
-        self.send_command(f':INP{channel}:COUP {coupling_upper}')
+        self.write(f':INP{channel}:COUP {coupling_upper}')
 
     def _set_attenuation(self, channel: int, attenuation_x: int):
         """
@@ -116,7 +116,7 @@ class HP53131A(Instrument):
             raise ValueError("Channel must be 1 or 2.")
         if attenuation_x not in [1, 10]:
             raise ValueError("Attenuation must be 1 or 10.")
-        self.send_command(f':INP{channel}:ATT {attenuation_x}')
+        self.write(f':INP{channel}:ATT {attenuation_x}')
 
     def _set_trigger_level_volts(self, channel: int, level: float):
         """
@@ -124,7 +124,7 @@ class HP53131A(Instrument):
         """
         if channel not in [1, 2]:
             raise ValueError("Channel must be 1 or 2.")
-        self.send_command(f':SENS:EVEN{channel}:LEV:ABS {level}')
+        self.write(f':SENS:EVEN{channel}:LEV:ABS {level}')
 
     def get_trigger_level_volts(self, channel: int) -> float:
         """
@@ -140,7 +140,7 @@ class HP53131A(Instrument):
         """
         if channel not in [1, 2]:
             raise ValueError("Channel must be 1 or 2.")
-        response = self.query(f':SENS:EVEN{channel}:LEV:ABS?')
+        response = self.ask(f':SENS:EVEN{channel}:LEV:ABS?')
         return float(response)
 
     def _set_trigger_level_percent(self, channel: int, percent: float):
@@ -161,8 +161,8 @@ class HP53131A(Instrument):
         if not 0 <= percent <= 100:
             raise ValueError("Percent must be between 0 and 100.")
         # Ensure auto-trigger is on before setting a relative level
-        self.send_command(f':SENS:EVEN{channel}:LEV:AUTO ON')
-        self.send_command(f':SENS:EVEN{channel}:LEV:REL {percent}')
+        self.write(f':SENS:EVEN{channel}:LEV:AUTO ON')
+        self.write(f':SENS:EVEN{channel}:LEV:REL {percent}')
 
     def _set_event_slope(self, channel: int, edge: str):
         """
@@ -179,7 +179,7 @@ class HP53131A(Instrument):
         edge_upper = edge.upper()
         if edge_upper not in ['POS', 'NEG']:
             raise ValueError("Edge must be 'POS' or 'NEG'.")
-        self.send_command(f':SENS:EVEN{channel}:SLOP {edge_upper}')
+        self.write(f':SENS:EVEN{channel}:SLOP {edge_upper}')
 
     def _set_time_interval_input_mode(self, mode: str):
         """
@@ -196,7 +196,7 @@ class HP53131A(Instrument):
             raise ValueError("Mode must be 'COMMON' or 'SEPARATE'.")
         
         feed_source = 'INP1' if mode_upper == 'COMMON' else 'INP2'
-        self.send_command(f":SENS:EVEN2:FEED '{feed_source}'")
+        self.write(f":SENS:EVEN2:FEED '{feed_source}'")
 
     def initiate_continuous(self, enabled: bool):
         """
@@ -207,7 +207,7 @@ class HP53131A(Instrument):
         
         SCPI Command: :INITiate:CONTinuous <bool>
         """
-        self.send_command(f':INIT:CONT {int(enabled)}')
+        self.write(f':INIT:CONT {int(enabled)}')
     
     def measurement_configuration(self, channel: int, coupling: str = 'DC', slope: str = 'POS', attenuation_x: int = 1, trigger_level: float = 0):
         """
@@ -237,7 +237,7 @@ class HP53131A(Instrument):
             resolution: The desired resolution (e.g., '1Hz'). DEF for default.
         """
         conf_cmd = f":CONF:FREQ {expected_value},{resolution},(@{channel})"
-        self.send_command(conf_cmd)
+        self.write(conf_cmd)
 
     def measure_frequency_gated(self, gate_time: float, channel: int = 1):
         """
@@ -252,10 +252,10 @@ class HP53131A(Instrument):
             :FREQuency:ARM:STOP:SOURce TIMer
             :FREQuency:ARM:STOP:TIMer <gate_time>
         """
-        self.send_command(f":FUNC 'FREQ {channel}'")
-        self.send_command(":FREQ:ARM:STAR:SOUR IMM")
-        self.send_command(":FREQ:ARM:STOP:SOUR TIM")
-        self.send_command(f":FREQ:ARM:STOP:TIM {gate_time}")
+        self.write(f":FUNC 'FREQ {channel}'")
+        self.write(":FREQ:ARM:STAR:SOUR IMM")
+        self.write(":FREQ:ARM:STOP:SOUR TIM")
+        self.write(f":FREQ:ARM:STOP:TIM {gate_time}")
 
     def measure_period(self, channel: int, expected_value: str = 'DEF', resolution: str = 'DEF'):
         """
@@ -269,14 +269,14 @@ class HP53131A(Instrument):
                         averaging the measurement over more cycles of the input signal.
         """
         conf_cmd = f":CONF:PER {expected_value},{resolution},(@{channel})"
-        self.send_command(conf_cmd)
+        self.write(conf_cmd)
 
     def measure_time_interval(self):
         """
         Measures the time interval between a specified edge on Channel 1 (start)
         and a specified edge on Channel 2 (stop). Assumes SEPARATE input mode.
         """
-        self.send_command(":CONF:TINT (@1),(@2)")
+        self.write(":CONF:TINT (@1),(@2)")
 
     def measure_period_average(self, channel: int, num_averages: int):
         """
@@ -286,11 +286,11 @@ class HP53131A(Instrument):
             channel: The input channel (1, 2, or 3).
             num_averages: The number of measurements to average (2 to 1,000,000).
         """
-        self.send_command(f":CONF:PER DEF,DEF,(@{channel})")
-        self.send_command(f":CALC3:AVER:COUN {num_averages}")
-        self.send_command(":CALC3:AVER:STAT ON")
-        self.send_command(":TRIG:COUN:AUTO ON")
-        self.send_command(":CALC3:AVER:TYPE MEAN")
+        self.write(f":CONF:PER DEF,DEF,(@{channel})")
+        self.write(f":CALC3:AVER:COUN {num_averages}")
+        self.write(":CALC3:AVER:STAT ON")
+        self.write(":TRIG:COUN:AUTO ON")
+        self.write(":CALC3:AVER:TYPE MEAN")
 
     def measure_time_interval_average(self, num_averages: int):
         """
@@ -299,11 +299,11 @@ class HP53131A(Instrument):
         Args:
             num_averages: The number of measurements to average (2 to 1,000,000).
         """
-        self.send_command(":CONF:TINT (@1),(@2)")
-        self.send_command(f":CALC3:AVER:COUN {num_averages}")
-        self.send_command(":CALC3:AVER:STAT ON")
-        self.send_command(":TRIG:COUN:AUTO ON")
-        self.send_command(":CALC3:AVER:TYPE MEAN")
+        self.write(":CONF:TINT (@1),(@2)")
+        self.write(f":CALC3:AVER:COUN {num_averages}")
+        self.write(":CALC3:AVER:STAT ON")
+        self.write(":TRIG:COUN:AUTO ON")
+        self.write(":CALC3:AVER:TYPE MEAN")
 
     # --- Totalizer (Counter) Functions ---
 
@@ -319,7 +319,7 @@ class HP53131A(Instrument):
             :CONFigure:TOTalize:CONTinuous (@<channel>)
         """
         # This configures for a manually gated (start/stop) totalize measurement
-        self.send_command(f":CONF:TOT:CONT")
+        self.write(f":CONF:TOT:CONT")
 
     def stop(self):
         """
@@ -328,7 +328,7 @@ class HP53131A(Instrument):
         SCPI Commands:
             :ABORt
         """
-        self.send_command(":ABORt")
+        self.write(":ABORt")
 
     def measure_totalize_timed(self, gate_time: float):
         """
@@ -340,4 +340,4 @@ class HP53131A(Instrument):
         SCPI Command: :CONFigure:TOTalize:TIMed <gate_time>,(@<channel>)
         """
         conf_cmd = f":CONF:TOT:TIM {gate_time}"
-        self.send_command(conf_cmd)
+        self.write(conf_cmd)

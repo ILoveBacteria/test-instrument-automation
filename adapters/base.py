@@ -36,7 +36,7 @@ class ProtocolAdapter:
         """
         pass
 
-    def query(self, command: str, buffer_size: int = 1024) -> str:
+    def ask(self, command: str, buffer_size: int = 1024) -> str:
         """
         Send a command to the device and read the response.
 

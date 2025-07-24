@@ -4,51 +4,51 @@ from devices import Instrument
 class HP3458A(Instrument):
     def setup(self):
         super().setup()
-        self.send_command('TRIG HOLD') # Hold triggering
+        self.write('TRIG HOLD') # Hold triggering
         
     def id(self):
-        return self.query('ID?')
+        return self.ask('ID?')
 
     def reset(self):
-        self.send_command('RESET')
+        self.write('RESET')
         
     def beep(self):
-        self.send_command('BEEP')
+        self.write('BEEP')
         
     def external_buffer(self, enabled: bool):
         command = 'TBUFF ON' if enabled else 'TBUFF OFF'
-        self.send_command(command)
+        self.write(command)
         
     def memory(self):
-        self.send_command('MEM FIFO') 
+        self.write('MEM FIFO') 
         
     def reading_counts(self):
-        return self.query('MCOUNT?')
+        return self.ask('MCOUNT?')
         
     def temperature(self):
         """
         Reads the internal temperature of the multimeter.
         Example response: 29.3
         """
-        return self.query('TEMP?')
+        return self.ask('TEMP?')
         
     def error(self):
         """
         Reads the error string from the instrument.
         Example response: 0,"NO ERROR" or 102,"TRIGGER TOO FAST"
         """
-        return self.query('ERRSTR?')
+        return self.ask('ERRSTR?')
         
     def display(self, message: str):
         if len(message) > 75:
             raise ValueError("Display message cannot exceed 75 characters.")
-        self.send_command(f'DISP MSG,"{message}"')
+        self.write(f'DISP MSG,"{message}"')
 
     def get_reading(self, trig=True):
         """Triggers a single reading and returns the value."""
         if trig:
-            self.send_command('TRIG SGL')
-        response = list(map(float, self.read_response().strip().split()))
+            self.write('TRIG SGL')
+        response = list(map(float, self.read().strip().split()))
         return response if len(response) > 1 else response[0]
     
     # --- Helper & Configuration Functions ---
@@ -56,7 +56,7 @@ class HP3458A(Instrument):
 
     def set_filter(self, enable=True):
         """Enables/disables the low-pass filter with the -3dB point at 75kHz."""
-        self.send_command('LFILTER ON' if enable else 'LFILTER OFF')
+        self.write('LFILTER ON' if enable else 'LFILTER OFF')
 
     def __set_triggering(self, source, arm_source):
         """
@@ -71,8 +71,8 @@ class HP3458A(Instrument):
         
         SCPI Commands: TARM, TRIG
         """
-        self.send_command(f'TARM {arm_source}')
-        self.send_command(f'TRIG {source}')
+        self.write(f'TARM {arm_source}')
+        self.write(f'TRIG {source}')
 
     def __set_reading_burst(self, count: int, interval: float | None):
         """
@@ -86,30 +86,30 @@ class HP3458A(Instrument):
         
         SCPI Commands: NRDGS, TIMER
         """
-        self.send_command('MEM FIFO')
+        self.write('MEM FIFO')
         if interval:
-            self.send_command(f'TIMER {interval}')
-            self.send_command(f'NRDGS {count},TIMER')
+            self.write(f'TIMER {interval}')
+            self.write(f'NRDGS {count},TIMER')
         else:
-            self.send_command(f'NRDGS {count},AUTO')
+            self.write(f'NRDGS {count},AUTO')
 
     def __set_range(self, mrange: float | None, nplc: float):
         if mrange is None:
-            self.send_command('RANGE AUTO')
+            self.write('RANGE AUTO')
         else:
-            self.send_command(f'RANGE {mrange:0.6f}')
-        self.send_command(f'NPLC {nplc:0.3f}')
+            self.write(f'RANGE {mrange:0.6f}')
+        self.write(f'NPLC {nplc:0.3f}')
 
     def __autoZero(self, enabled):
         """The auto zero function applies only to DC voltage, DC current, and resistance measurements."""
-        self.send_command('AZERO ON' if enabled else 'AZERO OFF')
+        self.write('AZERO ON' if enabled else 'AZERO OFF')
 
     def __hiZ(self, enabled):
         """the fixed input resistance function for DC voltage measurements"""
-        self.send_command('FIXEDZ OFF' if enabled else 'FIXEDZ ON')
+        self.write('FIXEDZ OFF' if enabled else 'FIXEDZ ON')
 
     def __ocomp(self, enabled):
-        self.send_command('OCOMP ON' if enabled else 'OCOMP OFF')
+        self.write('OCOMP ON' if enabled else 'OCOMP OFF')
 
     # --- Measurement Configuration Functions ---
     
@@ -118,7 +118,7 @@ class HP3458A(Instrument):
         self.__set_triggering(source, arm_source)
     
     def _common_configure(self, mrange, nplc, AutoZero=True, HiZ=False, OffsetCompensation=False):
-        self.send_command('NDIG 6')
+        self.write('NDIG 6')
         self.__set_range(mrange, nplc)
         self.__autoZero(AutoZero)
         self.__hiZ(HiZ)
@@ -126,39 +126,39 @@ class HP3458A(Instrument):
 
     def conf_function_DCV(self, mrange=None, nplc=1, AutoZero=True, HiZ=False):
         """Configures the meter to measure DCV. If range=None the meter is set to Autorange."""
-        self.send_command('PRESET NORM')
-        self.send_command('DCV')
+        self.write('PRESET NORM')
+        self.write('DCV')
         self._common_configure(mrange, nplc, AutoZero, HiZ)
 
     def conf_function_DCI(self, mrange=None, nplc=1, AutoZero=True, HiZ=False):
         """Configures the meter to measure DCI. If range=None the meter is set to Autorange."""
-        self.send_command('PRESET NORM')
-        self.send_command('DCI')
+        self.write('PRESET NORM')
+        self.write('DCI')
         self._common_configure(mrange, nplc, AutoZero, HiZ)
 
     def conf_function_ACV(self, mrange=None, nplc=1):
         """Configures the meter to measure ACV (True RMS). If range=None the meter is set to Autorange."""
-        self.send_command('PRESET NORM')
-        self.send_command('ACV')
-        self.send_command('SETACV SYNC')
+        self.write('PRESET NORM')
+        self.write('ACV')
+        self.write('SETACV SYNC')
         self._common_configure(mrange, nplc)
 
     def conf_function_ACI(self, mrange=None, nplc=1):
         """Configures the meter to measure ACI. If range=None the meter is set to Autorange."""
-        self.send_command('PRESET NORM')
-        self.send_command('ACI')
+        self.write('PRESET NORM')
+        self.write('ACI')
         self._common_configure(mrange, nplc)
 
     def conf_function_OHM2W(self, mrange=None, nplc=1, AutoZero=True, OffsetCompensation=False):
         """Configures the meter to measure OHM2W. If range=None the meter is set to Autorange."""
-        self.send_command('PRESET NORM')
-        self.send_command('OHM')
+        self.write('PRESET NORM')
+        self.write('OHM')
         self._common_configure(mrange, nplc, AutoZero, OffsetCompensation)
 
     def conf_function_OHM4W(self, mrange=None, nplc=1, AutoZero=True, OffsetCompensation=False):
         """Configures the meter to measure OHM4W. If range=None the meter is set to Autorange."""
-        self.send_command('PRESET NORM')
-        self.send_command('OHMF')
+        self.write('PRESET NORM')
+        self.write('OHMF')
         self._common_configure(mrange, nplc, AutoZero, OffsetCompensation)
 
     def conf_function_FREQ(self, mrange='AUTO', gate_time=1.0):
@@ -186,12 +186,12 @@ class HP3458A(Instrument):
         resolution_param = gate_time_map[gate_time]
         range_param = 'AUTO' if mrange == 'AUTO' else f'{mrange:0.6f}'
 
-        self.send_command('PRESET NORM')
+        self.write('PRESET NORM')
         # Use FSOURCE to define the signal type for frequency measurement (default is ACV)
-        self.send_command('FSOURCE ACV')
+        self.write('FSOURCE ACV')
         # Use the FUNC command for a concise setup
-        self.send_command(f'FUNC FREQ, {range_param}, {resolution_param}')
-        self.send_command('NDIG 6')  # Set number of digits to 6
+        self.write(f'FUNC FREQ, {range_param}, {resolution_param}')
+        self.write('NDIG 6')  # Set number of digits to 6
 
     def conf_function_ACDCV(self, mrange=None, nplc=1, ac_bandwidth_low=20, HiZ=False):
         """
@@ -205,9 +205,9 @@ class HP3458A(Instrument):
                                               Defaults to 20.
             HiZ (bool, optional): Use high input impedance. Defaults to True.
         """
-        self.send_command('PRESET NORM')
-        self.send_command('ACDCV')
-        self.send_command(f'ACBAND {ac_bandwidth_low}')
+        self.write('PRESET NORM')
+        self.write('ACDCV')
+        self.write(f'ACBAND {ac_bandwidth_low}')
         self._common_configure(mrange, nplc, AutoZero=True, HiZ=HiZ)
 
     # TODO: Test this function.
@@ -227,11 +227,11 @@ class HP3458A(Instrument):
         if mode.upper() not in ['DSDC', 'DSAC']:
             raise ValueError("Mode must be 'DSDC' or 'DSAC'.")
         
-        self.send_command('PRESET DIG') # Use the digitizing preset
-        self.send_command(mode.upper())
-        self.send_command(f'RANGE {mrange}')
+        self.write('PRESET DIG') # Use the digitizing preset
+        self.write(mode.upper())
+        self.write(f'RANGE {mrange}')
         if delay > 0:
-            self.send_command(f'DELAY {delay}')
+            self.write(f'DELAY {delay}')
         
         # SWEEP command sets the sample interval and number of samples
-        self.send_command(f'SWEEP {sample_interval}, {num_samples}')
+        self.write(f'SWEEP {sample_interval}, {num_samples}')

@@ -43,11 +43,11 @@ class PyVisaAdapter(ProtocolAdapter):
         """
         return self.instrument.read()
 
-    def query(self, command: str) -> str:
+    def ask(self, command: str) -> str:
         """
         Send a command and read the response.
         """
-        return self.instrument.query(command)
+        return self.instrument.ask(command)
         
     def close(self):
         """

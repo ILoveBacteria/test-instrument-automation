@@ -10,9 +10,9 @@ import time
 def test_instrument():
     hp3458a = create_connection()
     hp3458a.setup()
-    hp3458a.send_command('PRESET NORM')
+    hp3458a.write('PRESET NORM')
     hp3458a.measure_voltage()
-    response = hp3458a.read_response(1024)
+    response = hp3458a.read(1024)
     print(response)
     
 
@@ -38,7 +38,7 @@ def test_counter():
     hp53131a = HP53131A('counter', adapter)
     hp53131a.setup()
     hp53131a.measure_frequency()
-    res = hp53131a.read_response()
+    res = hp53131a.read()
     print(res)
     res = adapter.serial_poll()
 
@@ -47,7 +47,7 @@ def run_fetch(inst, count):
     data = []
     start = time.time()
     for i in range(count):
-        result = inst.query('FETC1?')
+        result = inst.ask('FETC1?')
         # data.append(result)
     end = time.time()
     return (end - start), data
@@ -57,7 +57,7 @@ def run_read(inst, count):
     data = []
     start = time.time()
     for i in range(count):
-        result = inst.query('READ2?')
+        result = inst.ask('READ2?')
         # data.append(result)
     end = time.time()
     return (end - start), data
@@ -67,8 +67,8 @@ def run_init_fetch(inst: Instrument, count):
     data = []
     start = time.time()
     for i in range(count):
-        inst.send_command('INIT1')
-        result = inst.query('FETC2?')
+        inst.write('INIT1')
+        result = inst.ask('FETC2?')
         # data.append(result)
     end = time.time()
     return (end - start), data
