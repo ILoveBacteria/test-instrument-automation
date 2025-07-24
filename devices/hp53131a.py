@@ -49,7 +49,7 @@ class HP53131A(Instrument):
     
     # --- Initiate and Reading
 
-    def _wait_for_opc(self, timeout_sec: int = 10):
+    def _wait_for_opc(self, timeout_sec: int):
         """
         Waits for the previous operation to complete by polling the Service
         Request Queue (SRQ) for the Operation Complete (OPC) bit.
@@ -77,12 +77,29 @@ class HP53131A(Instrument):
         response = self.ask(':FETCH?')
         return float(response)
     
+    def wait_and_fetch(self, timeout_sec: int = 10) -> float:
+        self._wait_for_opc(timeout_sec)
+        return self.fetch()
+    
+    def initiate_wait_fetch(self, timeout_sec: int = 10) -> float:
+        self.initiate()
+        return self.wait_and_fetch(timeout_sec)
+    
     def fetch_average(self) -> float:
         response = self.ask(":CALC3:DATA?")
         # Clean up by disabling statistics mode
         self.write(":CALC3:AVER:STAT OFF")
         self.write(":TRIG:COUN:AUTO OFF")
         return float(response)
+    
+    def stop(self):
+        """
+        Stops the continuous totalizer and fetches the final count.
+            
+        SCPI Commands:
+            :ABORt
+        """
+        self.write(":ABORt")
 
     # --- Configuration Functions ---
     def _set_input_coupling(self, channel: int, coupling: str):
@@ -320,15 +337,6 @@ class HP53131A(Instrument):
         """
         # This configures for a manually gated (start/stop) totalize measurement
         self.write(f":CONF:TOT:CONT")
-
-    def stop(self):
-        """
-        Stops the continuous totalizer and fetches the final count.
-            
-        SCPI Commands:
-            :ABORt
-        """
-        self.write(":ABORt")
 
     def measure_totalize_timed(self, gate_time: float):
         """
