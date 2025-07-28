@@ -10,7 +10,7 @@
 # connected to the Raspberry Pi using standard Prologix commands.
 #
 # Author: Gemini
-# Version: 1.0
+# Version: 1.1 (Updated to handle TCP streams correctly)
 #
 # Installation on Raspberry Pi:
 # 1. Ensure linux-gpib and the gpib_bitbang driver are installed and configured.
@@ -119,22 +119,35 @@ class ClientHandler(threading.Thread):
     def run(self):
         """Main loop to handle client communication."""
         logging.info(f"New connection from {self.addr}")
+        buffer = ""
         try:
             self.gpib_manager = GpibManager(GPIB_INTERFACE, self.current_gpib_address)
             
             while True:
+                # Read data from the socket
                 data = self.conn.recv(1024)
                 if not data:
                     break # Client disconnected
                 
-                command = data.decode('utf-8').strip()
-                logging.info(f"Received from {self.addr}: '{command}'")
+                # Add received data to the buffer
+                buffer += data.decode('utf-8')
 
-                # Check if it's a Prologix command
-                if command.startswith('++'):
-                    self.handle_prologix_command(command)
-                else:
-                    self.handle_instrument_command(command)
+                # Process all complete commands in the buffer
+                while '\n' in buffer:
+                    # Split at the first newline character
+                    command, buffer = buffer.split('\n', 1)
+                    command = command.strip() # Remove any whitespace/CR
+
+                    if not command:
+                        continue # Skip empty lines
+
+                    logging.info(f"Processing command from {self.addr}: '{command}'")
+
+                    # Check if it's a Prologix command
+                    if command.startswith('++'):
+                        self.handle_prologix_command(command)
+                    else:
+                        self.handle_instrument_command(command)
 
         except (ConnectionResetError, BrokenPipeError):
             logging.warning(f"Client {self.addr} disconnected unexpectedly.")
@@ -246,7 +259,7 @@ class ClientHandler(threading.Thread):
 
             # --- Informational ---
             elif cmd == '++ver':
-                self.send_response("Raspberry Pi Prologix Emulator v1.0")
+                self.send_response("Raspberry Pi Prologix Emulator v1.1")
 
             else:
                 self.send_response(f"Error: Unknown command '{cmd}'")
@@ -272,4 +285,3 @@ def start_server():
 
 if __name__ == "__main__":
     start_server()
-
