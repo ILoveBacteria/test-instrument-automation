@@ -54,7 +54,7 @@ class GpibManager:
             resource_name = f"{self.interface}::{self.address}::INSTR"
             self.instrument = self.rm.open_resource(resource_name)
             # Set a reasonable timeout for instrument communication
-            self.instrument.timeout = 2000 # 2 seconds
+            self.instrument.timeout = 5000 # 2 seconds
             logging.info(f"Successfully connected to GPIB device at address {self.address}")
         except pyvisa.errors.VisaIOError as e:
             logging.error(f"Failed to connect to GPIB device at address {self.address}: {e}")
@@ -223,13 +223,13 @@ class ClientHandler(threading.Thread):
                 # PyVISA does not have a direct broadcast trigger.
                 # This would need to be implemented if specific instruments require it.
                 logging.warning("++trg command is not fully implemented.")
-                self.send_response("OK")
+                # self.send_response("OK")
 
             elif cmd == '++ifc':
                  # Interface Clear (IFC) is typically handled by the VISA backend
                  # during resource management. A manual trigger is not standard in PyVISA.
                 logging.warning("++ifc is handled by VISA backend, not manually triggered.")
-                self.send_response("OK")
+                # self.send_response("OK")
             
             elif cmd == '++loc':
                 self.gpib_manager.instrument.control_ren(pyvisa.constants.RENLineOperation.deassert)
@@ -255,7 +255,7 @@ class ClientHandler(threading.Thread):
                  # We acknowledge them to maintain compatibility.
                  logging.info(f"Acknowledged command: {command}")
                  # You can add logic here if specific behavior is needed.
-                 self.send_response("OK")
+                #  self.send_response("OK")
 
             # --- Informational ---
             elif cmd == '++ver':
