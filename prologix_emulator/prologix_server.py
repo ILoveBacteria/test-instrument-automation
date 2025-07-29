@@ -9,7 +9,6 @@
 # It allows a remote computer to control GPIB instruments
 # connected to the Raspberry Pi using standard Prologix commands.
 #
-# Author: Gemini
 # Version: 1.1 (Updated to handle TCP streams correctly)
 #
 # Installation on Raspberry Pi:
