@@ -1,0 +1,30 @@
+spec: "1.1"
+
+devices:
+  HP3458A:
+    manufacturer: Hewlett-Packard
+    model: HP3458A
+    dialogues:
+      - q: "ID?"
+        r: "HEWLETT-PACKARD,HP3458A,0,7-4-2"
+      - q: "ERRSTR?"
+        r: "0,\"NO ERROR\""
+      - q: "READ?"
+        r: "1.2345"
+
+  HP53131A:
+    manufacturer: Hewlett-Packard
+    model: HP53131A
+    dialogues:
+      - q: "*IDN?"
+        r: "HEWLETT-PACKARD,HP53131A,0,1-2-3"
+      - q: ":SYST:ERR?"
+        r: "0,No Error"
+      - q: ":FETCH?"
+        r: "123456.78"
+
+resources:
+  GPIB0::23::INSTR:
+    device: HP3458A
+  GPIB0::22::INSTR:
+    device: HP53131A
