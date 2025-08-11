@@ -1,7 +1,7 @@
 import pyvisa
 from typing import Optional
 
-from adapters.base import ProtocolAdapter
+from adapters import ProtocolAdapter
 
 
 class PyVisaAdapter(ProtocolAdapter):
@@ -12,7 +12,7 @@ class PyVisaAdapter(ProtocolAdapter):
     
     _rm: Optional[pyvisa.ResourceManager] = None
     
-    def __init__(self, visa_resource_string: str, read_timeout: int = 10000, **kwargs):
+    def __init__(self, visa_resource_string: str, backend: str = '@py', read_timeout: int = 10000, **kwargs):
         """
         Initialize the PyVISA adapter.
 
@@ -25,7 +25,7 @@ class PyVisaAdapter(ProtocolAdapter):
         
         # Use a shared ResourceManager for efficiency
         if PyVisaAdapter._rm is None:
-            PyVisaAdapter._rm = pyvisa.ResourceManager()
+            PyVisaAdapter._rm = pyvisa.ResourceManager(backend)
             
         self.instrument = self._rm.open_resource(self.address, **kwargs)
         self.instrument.timeout = read_timeout
@@ -47,7 +47,7 @@ class PyVisaAdapter(ProtocolAdapter):
         """
         Send a command and read the response.
         """
-        return self.instrument.ask(command)
+        return self.instrument.query(command)
         
     def close(self):
         """
