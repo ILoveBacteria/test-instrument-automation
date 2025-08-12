@@ -11,11 +11,63 @@ class HP53131A(Instrument):
     def __init__(self, adapter, **kwargs):
         super().__init__(adapter, 'Hewlett-Packard 53131A', **kwargs)
         
+    # Channel-specific configuration properties
+    ch1_coupling = Instrument.control(
+        ":INP1:COUP?", ":INP1:COUP %s",
+        """Sets the input coupling for channel 1.""",
+        validator=strict_discrete_set,
+        values=['AC', 'DC']
+    )
+
+    ch2_coupling = Instrument.control(
+        ":INP2:COUP?", ":INP2:COUP %s",
+        """Sets the input coupling for channel 2.""",
+        validator=strict_discrete_set,
+        values=['AC', 'DC']
+    )
+
+    ch1_attenuation = Instrument.control(
+        ":INP1:ATT?", ":INP1:ATT %d",
+        """Sets the input attenuation for channel 1.""",
+        validator=strict_discrete_set,
+        values=[1, 10]
+    )
+
+    ch2_attenuation = Instrument.control(
+        ":INP2:ATT?", ":INP2:ATT %d",
+        """Sets the input attenuation for channel 2.""",
+        validator=strict_discrete_set,
+        values=[1, 10]
+    )
+
+    ch1_trigger_level = Instrument.control(
+        ":SENS:EVEN1:LEV:ABS?", ":SENS:EVEN1:LEV:ABS %f",
+        """Sets the trigger level for channel 1 in Volts."""
+    )
+
+    ch2_trigger_level = Instrument.control(
+        ":SENS:EVEN2:LEV:ABS?", ":SENS:EVEN2:LEV:ABS %f",
+        """Sets the trigger level for channel 2 in Volts."""
+    )
+
+    ch1_trigger_slope = Instrument.control(
+        ":SENS:EVEN1:SLOP?", ":SENS:EVEN1:SLOP %s",
+        """Sets the trigger slope for channel 1.""",
+        validator=strict_discrete_set,
+        values=['POS', 'NEG']
+    )
+
+    ch2_trigger_slope = Instrument.control(
+        ":SENS:EVEN2:SLOP?", ":SENS:EVEN2:SLOP %s",
+        """Sets the trigger slope for channel 2.""",
+        validator=strict_discrete_set,
+        values=['POS', 'NEG']
+    )
+        
     def setup(self):
         """
         Initializes the counter to a known, stable state for remote programming.
         """
-        super().setup()
         self.reset()
         self.clear()
         # Disable all bits in Service Request Enable register

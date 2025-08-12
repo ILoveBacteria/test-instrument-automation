@@ -19,7 +19,6 @@ class HPE4419B(Instrument):
         Initializes the power meter to a known state for remote programming.
         This performs a reset, clears the status registers, and presets the system.
         """
-        super().setup()
         self.reset()
         self.clear_status()
         self.write('SYST:PRES')
