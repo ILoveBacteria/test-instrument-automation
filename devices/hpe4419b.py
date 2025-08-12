@@ -1,6 +1,6 @@
 import time
 
-from devices import Instrument
+from pymeasure.instruments import Instrument
 
 
 class HPE4419B(Instrument):
@@ -10,6 +10,9 @@ class HPE4419B(Instrument):
     This class provides methods for configuring, calibrating, and performing
     power measurements on one or two channels.
     """
+    
+    def __init__(self, adapter, **kwargs):
+        super().__init__(adapter, 'Hewlett-Packard HPE4419B', **kwargs)
     
     def setup(self):
         """

@@ -1,15 +1,16 @@
+from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 import time
-
-from devices import Instrument
 
 
 class HP53131A(Instrument):
     """
-    Driver for the Agilent/HP 53131A Universal Counter.
-    
-    This class implements methods for configuring and performing various
-    measurements such as frequency, period, time interval, and totalize.
+    Represents the Hewlett-Packard 53131A Universal Counter.
     """
+
+    def __init__(self, adapter, **kwargs):
+        super().__init__(adapter, 'Hewlett-Packard 53131A', **kwargs)
+        
     def setup(self):
         """
         Initializes the counter to a known, stable state for remote programming.
