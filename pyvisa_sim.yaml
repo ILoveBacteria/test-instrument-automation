@@ -9,8 +9,8 @@ devices:
         r: "HEWLETT-PACKARD,HP3458A,0,7-4-2"
       - q: "ERRSTR?"
         r: "0,\"NO ERROR\""
-      - q: "READ?"
-        r: "1.2345"
+      - q: "TRIG SGL"
+        r: "{RANDOM(0, 10, 1):.2f}"
 
   HP53131A:
     manufacturer: Hewlett-Packard
@@ -21,7 +21,7 @@ devices:
       - q: ":SYST:ERR?"
         r: "0,No Error"
       - q: ":FETCH?"
-        r: "123456.78"
+        r: "{RANDOM(10, 1000, 1):.2f}"
 
 resources:
   GPIB0::23::INSTR:
