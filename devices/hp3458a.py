@@ -11,11 +11,80 @@ class HP3458A(HPLegacyInstrument):
     def __init__(self, adapter, **kwargs):
         super().__init__(adapter, 'Hewlett-Packard 3458A', **kwargs)
 
+    # System-level commands and properties
+    id = Instrument.measurement(
+        "ID?", """Reads the instrument identification"""
+    )
+
+    temperature = Instrument.measurement(
+        "TEMP?", """Reads the internal temperature of the multimeter in Celsius."""
+    )
+
+    reading_counts = Instrument.measurement(
+        "MCOUNT?", """Reads the number of readings currently in memory."""
+    )
+
+    # Configuration properties
+    auto_zero = Instrument.control(
+        "AZERO?", "AZERO %s",
+        """Controls the autozero function. Applies only to DC voltage, 
+        DC current, and resistance measurements.""",
+        validator=strict_discrete_set,
+        values={'ON': 1, 'OFF': 0}
+    )
+
+    high_impedance = Instrument.control(
+        "FIXEDZ?", "FIXEDZ %s",
+        """Controls the fixed input resistance function for DC voltage measurements.""",
+        validator=strict_discrete_set,
+        values={'ON': 0, 'OFF': 1}
+    )
+
+    offset_compensation = Instrument.control(
+        "OCOMP?", "OCOMP %s",
+        """Controls the offset compensation function for resistance measurements.""",
+        validator=strict_discrete_set,
+        values={'ON': 1, 'OFF': 0}
+    )
+
+    low_pass_filter = Instrument.control(
+        "LFILTER?", "LFILTER %s",
+        """Controls the low-pass filter with a -3dB point at 75kHz.""",
+        validator=strict_discrete_set,
+        values={'ON': 1, 'OFF': 0}
+    )
+
+    trigger_source = Instrument.control(
+        "TRIG?", "TRIG %s",
+        """Sets the trigger event source.""",
+        validator=strict_discrete_set,
+        values=['SGL', 'EXT', 'HOLD']
+    )
+
+    arm_source = Instrument.control(
+        "TARM?", "TARM %s",
+        """Sets the event that arms the trigger.""",
+        validator=strict_discrete_set,
+        values=['AUTO', 'SGL', 'EXT', 'HOLD']
+    )
+
+    burst_interval = Instrument.control(
+        "TIMER?", "TIMER %f",
+        """Sets the time interval between readings in a burst, in seconds."""
+    )
+
+    measurement_range = Instrument.control(
+        "RANGE?", "RANGE %s",
+        """Sets the measurement range. Use 'AUTO' for autorange."""
+    )
+
+    nplc = Instrument.control(
+        "NPLC?", "NPLC %f",
+        """Sets the integration time in Number of Power Line Cycles (NPLC)."""
+    )
+
     def setup(self):
         self.write('TRIG HOLD') # Hold triggering
-        
-    def id(self):
-        return self.ask('ID?')
 
     def reset(self):
         self.write('RESET')
@@ -26,19 +95,6 @@ class HP3458A(HPLegacyInstrument):
     def external_buffer(self, enabled: bool):
         command = 'TBUFF ON' if enabled else 'TBUFF OFF'
         self.write(command)
-        
-    def memory(self):
-        self.write('MEM FIFO') 
-        
-    def reading_counts(self):
-        return self.ask('MCOUNT?')
-        
-    def temperature(self):
-        """
-        Reads the internal temperature of the multimeter.
-        Example response: 29.3
-        """
-        return self.ask('TEMP?')
         
     def error(self):
         """
@@ -62,10 +118,6 @@ class HP3458A(HPLegacyInstrument):
     # --- Helper & Configuration Functions ---
     # TODO: Implement interrupt before reading.
 
-    def set_filter(self, enable=True):
-        """Enables/disables the low-pass filter with the -3dB point at 75kHz."""
-        self.write('LFILTER ON' if enable else 'LFILTER OFF')
-
     def __set_triggering(self, source, arm_source):
         """
         Sets the trigger and trigger arming source.
@@ -79,8 +131,8 @@ class HP3458A(HPLegacyInstrument):
         
         SCPI Commands: TARM, TRIG
         """
-        self.write(f'TARM {arm_source}')
-        self.write(f'TRIG {source}')
+        self.arm_source = arm_source
+        self.trigger_source = source
 
     def __set_reading_burst(self, count: int, interval: float | None):
         """
@@ -96,28 +148,18 @@ class HP3458A(HPLegacyInstrument):
         """
         self.write('MEM FIFO')
         if interval:
-            self.write(f'TIMER {interval}')
+            self.burst_interval = interval
             self.write(f'NRDGS {count},TIMER')
         else:
             self.write(f'NRDGS {count},AUTO')
 
     def __set_range(self, mrange: float | None, nplc: float):
+        """Sets the range and NPLC."""
         if mrange is None:
-            self.write('RANGE AUTO')
+            self.measurement_range = 'AUTO'
         else:
-            self.write(f'RANGE {mrange:0.6f}')
-        self.write(f'NPLC {nplc:0.3f}')
-
-    def __autoZero(self, enabled):
-        """The auto zero function applies only to DC voltage, DC current, and resistance measurements."""
-        self.write('AZERO ON' if enabled else 'AZERO OFF')
-
-    def __hiZ(self, enabled):
-        """the fixed input resistance function for DC voltage measurements"""
-        self.write('FIXEDZ OFF' if enabled else 'FIXEDZ ON')
-
-    def __ocomp(self, enabled):
-        self.write('OCOMP ON' if enabled else 'OCOMP OFF')
+            self.measurement_range = f'{mrange:0.6f}'
+        self.nplc = nplc
 
     # --- Measurement Configuration Functions ---
     
@@ -128,9 +170,9 @@ class HP3458A(HPLegacyInstrument):
     def _common_configure(self, mrange, nplc, AutoZero=True, HiZ=False, OffsetCompensation=False):
         self.write('NDIG 6')
         self.__set_range(mrange, nplc)
-        self.__autoZero(AutoZero)
-        self.__hiZ(HiZ)
-        self.__ocomp(OffsetCompensation)
+        self.auto_zero = 'ON' if AutoZero else 'OFF'
+        self.high_impedance = 'ON' if HiZ else 'OFF'
+        self.offset_compensation = 'ON' if OffsetCompensation else 'OFF'
 
     def conf_function_DCV(self, mrange=None, nplc=1, AutoZero=True, HiZ=False):
         """Configures the meter to measure DCV. If range=None the meter is set to Autorange."""
@@ -237,7 +279,7 @@ class HP3458A(HPLegacyInstrument):
         
         self.write('PRESET DIG') # Use the digitizing preset
         self.write(mode.upper())
-        self.write(f'RANGE {mrange}')
+        self.measurement_range = f'{mrange:0.6f}'
         if delay > 0:
             self.write(f'DELAY {delay}')
         
