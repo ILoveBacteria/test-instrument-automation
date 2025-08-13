@@ -1,6 +1,5 @@
 from devices import HP3458A
 from adapters.gpib_adapter import PrologixGPIBEthernet
-from adapters.pyvisa_adapter import PyVisaAdapter
 
 import time
 
@@ -8,6 +7,13 @@ import time
 def create_prologix_connection():
     adapter = PrologixGPIBEthernet('192.168.1.101', address=2, prologix_read_timeout=0.5, socket_read_timeout=15)
     device = HP3458A(name='hp3458', adapter=adapter)
+    device.setup()
+    return device
+
+
+def create_pyvisa_connection():
+    device = HP3458A('GPIB0::2::INSTR', visa_library='192.168.1.102:5000@proxy')
+    device.adapter.connection.timeout = 15000
     device.setup()
     return device
 
@@ -82,9 +88,9 @@ def test_frequency_low_resolution(device):
 
 
 def main():
-    device = create_prologix_connection()
-    # print(device.temperature())
-    # device = create_pyvisa_connection()
+    # device = create_prologix_connection()
+    device = create_pyvisa_connection()
+    # print(device.temperature)
     # test_beep(device)
     # test_dc_autorange(device)
     # test_dc_manaulrange(device)
