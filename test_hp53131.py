@@ -12,20 +12,28 @@ def create_prologix_connection():
     return device
 
 
+def create_pyvisa_connection():
+    device = HP53131A('GPIB0::3::INSTR', visa_library='192.168.1.102:5000@proxy')
+    device.adapter.connection.timeout = 15000
+    device.setup()
+    return device
+
+
 # Scenario 1: Frequency & Period Measurement
-def test_frequency(counter):
+def test_frequency(counter: HP53131A):
     print("Testing Frequency Measurement...")
-    freq = counter.measure_frequency(channel=1)
+    counter.measure_frequency(channel=1)
+    freq = counter.initiate_wait_fetch()
     print(f"Measured Frequency: {freq / 1e6:.6f} MHz")
     
     
-def test_period(counter):
+def test_period(counter: HP53131A):
     print("\nTesting Period Measurement...")
     period = counter.measure_period(channel=1)
     print(f"Measured Period: {period * 1e6:.6f} µs")
 
 
-def test_frequency_resolution_control(counter):
+def test_frequency_resolution_control(counter: HP53131A):
     print("\nTesting Resolution Control...")
     # Default resolution
     freq_def = counter.measure_frequency(channel=1, expected_value='1MHz')
@@ -36,7 +44,7 @@ def test_frequency_resolution_control(counter):
     print(f"High Resolution Freq:    {freq_high_res:.4f} Hz")
 
 
-def test_frequency_gated(counter):
+def test_frequency_gated(counter: HP53131A):
     print("\nTesting Gated Frequency Measurement...")
     freq = counter.measure_frequency_gated(gate_time=0.1, channel=1)
     print(f"Low Gate Time Frequency: {freq / 1e6:.6f} MHz")
@@ -47,7 +55,7 @@ def test_frequency_gated(counter):
 
 
 # Scenario 2: Trigger Level Control
-def test_frequency_dc_offset(counter):
+def test_frequency_dc_offset(counter: HP53131A):
     print("\nTesting Trigger Level Control...")
     # First, try to measure with the default auto-trigger (at 50% of p-p, around 0V)
     # This will likely fail or time out because the signal never crosses the default trigger level.
@@ -66,14 +74,14 @@ def test_frequency_dc_offset(counter):
 
 
 # Scenario 3: Time Interval (Edge to Edge)
-def test_phase_shift(counter):
+def test_phase_shift(counter: HP53131A):
     print("\nTesting Time Interval (Phase Shift)...")
     # Measure time from rising edge on Ch1 to rising edge on Ch2
     ti_pos_pos = counter.measure_time_interval(start_edge='POS', stop_edge='POS')
     print(f"Rising-to-Rising (90 deg shift): {ti_pos_pos * 1e9:.1f} ns")
     
 
-def test_rise_to_fall_edge(counter):
+def test_rise_to_fall_edge(counter: HP53131A):
     print("\nTesting Time Interval (Pulse Width)...")
     # Measure time from the rising edge (start) to the falling edge (stop) of the same signal
     pulse_width = counter.measure_time_interval(start_edge='POS', stop_edge='NEG')
@@ -81,7 +89,7 @@ def test_rise_to_fall_edge(counter):
     
     
 # Scenario 4: Averaging Functions
-def test_period_interval_averaging(counter):
+def test_period_interval_averaging(counter: HP53131A):
     print("\nTesting Averaging Functions...")
     print("--- Single Shot Readings ---")
     for i in range(3):
@@ -97,7 +105,7 @@ def test_period_interval_averaging(counter):
     
     
 # Scenario 5: Totalizer (Counter)
-def test_totalizer(counter):
+def test_totalizer(counter: HP53131A):
     print("\nTesting Totalizer (Counter)...")
     print("Setting FG to 100 kHz.")
     counter.start_totalize()
@@ -107,7 +115,7 @@ def test_totalizer(counter):
     print(f"Total events counted: {count}")
    
     
-def test_time_based_totalizer(counter):
+def test_time_based_totalizer(counter: HP53131A):
     print("\nTesting Time-Based Totalizer...")
     print("Setting FG to 1 kHz.")
     print("Counting events for exactly 1.0 second...")
@@ -116,8 +124,9 @@ def test_time_based_totalizer(counter):
 
 
 def main():
-    device = create_prologix_connection()
-    # test_frequency(device)
+    # device = create_prologix_connection()
+    device = create_pyvisa_connection()
+    test_frequency(device)
     # test_period(device)
     # test_frequency_resolution_control(device)
     # test_frequency_gated(device)
