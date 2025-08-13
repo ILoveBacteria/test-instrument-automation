@@ -84,7 +84,8 @@ class HP3458A(HPLegacyInstrument):
     )
 
     def setup(self):
-        self.write('TRIG HOLD') # Hold triggering
+        self.write('END ALWAYS')
+        self.write('TRIG HOLD')
 
     def reset(self):
         self.write('RESET')
