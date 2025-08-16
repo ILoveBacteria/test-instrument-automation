@@ -1,9 +1,9 @@
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 import time
 
 
-class HP53131A(Instrument):
+class HP53131A(SCPIMixin, Instrument):
     """
     Represents the Hewlett-Packard 53131A Universal Counter.
     """
@@ -111,7 +111,7 @@ class HP53131A(Instrument):
         # *OPC command sets the OPC bit in the Standard Event Status Register
         # when all pending operations are finished.
         self.write('*OPC')
-        while not self.adapter.query_srq():
+        while not self.adapter.connection.query_srq():
             if time.time() - start_time > timeout_sec:
                 raise TimeoutError("Timeout waiting for operation to complete.")
             time.sleep(0.1)
