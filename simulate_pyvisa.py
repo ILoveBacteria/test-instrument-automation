@@ -4,7 +4,7 @@ import pyvisa
 rm = pyvisa.ResourceManager('pyvisa_sim.yaml@sim')
 
 # HP3458A (GPIB address 22)
-hp3458a = rm.open_resource('GPIB0::23::INSTR', write_termination ='\n', read_termination='\n')
+hp3458a = rm.open_resource('GPIB0::2::INSTR', write_termination ='\n', read_termination='\n')
 print('HP3458A ID:', hp3458a.query('ID?'))
 print('HP3458A Error:', hp3458a.query('ERRSTR?'))
 # Simulate a reading
@@ -13,7 +13,7 @@ print('HP3458A Reading:', hp3458a.query('READ?'))
 
 
 # HP53131A (GPIB address 13)
-hp53131a = rm.open_resource('GPIB0::22::INSTR', write_termination ='\n', read_termination='\n')
+hp53131a = rm.open_resource('GPIB0::3::INSTR', write_termination ='\n', read_termination='\n')
 print('HP53131A ID:', hp53131a.query('*IDN?'))
 print('HP53131A Error:', hp53131a.query(':SYST:ERR?'))
 # Simulate frequency measurement

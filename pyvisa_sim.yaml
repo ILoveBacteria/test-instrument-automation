@@ -24,7 +24,7 @@ devices:
         r: "{RANDOM(10, 1000, 1):.2f}"
 
 resources:
-  GPIB0::23::INSTR:
+  GPIB0::2::INSTR:
     device: HP3458A
-  GPIB0::22::INSTR:
+  GPIB0::3::INSTR:
     device: HP53131A
