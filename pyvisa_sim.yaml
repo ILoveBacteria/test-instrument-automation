@@ -23,8 +23,23 @@ devices:
       - q: ":FETCH?"
         r: "{RANDOM(10, 1000, 1):.2f}"
 
+  AFG2225:
+    manufacturer: Tektronix
+    model: AFG2225
+    dialogues:
+      - q: "*IDN?"
+        r: "TEKTRONIX,AFG2225,0,1-2-3"
+      - q: ":SYST:ERR?"
+        r: "0,No Error"
+      - q: "SOURce1:FREQuency?"
+        r: "{RANDOM(1000, 100000, 1):.2f}"
+      - q: "SOURce1:FREQuency?"
+        r: "{RANDOM(1000, 100000, 1):.2f}"
+
 resources:
   GPIB0::2::INSTR:
     device: HP3458A
   GPIB0::3::INSTR:
     device: HP53131A
+  ASRL5::INSTR:
+    device: AFG2225
