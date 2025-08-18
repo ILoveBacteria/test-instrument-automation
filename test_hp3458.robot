@@ -2,10 +2,11 @@
 Library    HP3458ALibrary.py    GPIB0::2::INSTR    visa_library=pyvisa_sim.yaml@sim
 
 *** Test Cases ***
-Measure DC Voltage
-    [Documentation]    Setup HP3458A and measure DC voltage
-    Setup Device
-    Configure DCV    mrange=None
-    ${reading}=    Get Reading
-    Log    The measured value is ${reading}
-    # [Teardown]    Reset Device
+Test DC Voltage Measurement
+    [Documentation]    Example test with HP 3458A
+    ${id}=    Get Id
+    Log    Connected to: ${id}
+    Reset Device
+    Configure DCV
+    ${value}=    Get Reading
+    Log    Measured Voltage: ${value} V
