@@ -1,7 +1,9 @@
 import logging
+import time
+
 from pymeasure.instruments import Instrument, Channel, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
-from pyvisa.constants import Parity, StopBits
+
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -110,10 +112,46 @@ class AFG2225(SCPIMixin, Instrument):
         
     def setup(self):
         self.reset()
+        time.sleep(1)
+        self.clear()
+        # Enable the Operation Complete bit (1) to be summarized in the Status Byte
+        self.write('*ESE 1')
+        # Enable the Status Byte summary (bit 5, weight 32) to assert SRQ
+        self.write('*SRE 32')
 
     def reset(self):
         """Resets the instrument to its factory default state."""
         self.write("*RST")
+        
+    def write(self, command, **kwargs):
+        time.sleep(0.1)  # Allow time for the instrument to process commands
+        return super().write(command, **kwargs)
+        
+    def wait_for_opc(self, timeout=5, poll_interval=0.5):
+        """
+        Waits for the instrument to complete all pending operations.
+        This is done by sending the *OPC command and then polling the
+        Status Byte Register until the Event Summary Bit (ESB) is set.
+
+        :param timeout: Maximum time to wait in seconds.
+        :param poll_interval: Time to wait between polls in seconds.
+        """
+        self.write('*OPC')
+        time.sleep(0.1)
+        start_time = time.time()
+        while True:
+            try:
+                status_byte = int(self.ask('*STB?'))
+                # Check if bit 5 (Event Summary Bit, weight 32) is set
+                if (status_byte & 32):
+                    return
+            except Exception as e:
+                log.error(f"Error polling status byte: {e}")
+            
+            if (time.time() - start_time) > timeout:
+                raise TimeoutError("Timeout waiting for operation to complete.")
+            
+            time.sleep(poll_interval)
 
     def sync_phase(self):
         """
