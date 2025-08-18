@@ -1,5 +1,5 @@
 *** Settings ***
-Library    HP3458ALibrary.py    resource=GPIB0::2::INSTR    visa_library=192.168.1.102:5000@proxy
+Library    HP3458ALibrary.py    GPIB0::2::INSTR    visa_library=pyvisa_sim.yaml@sim
 
 *** Test Cases ***
 Measure DC Voltage

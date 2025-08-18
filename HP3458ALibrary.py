@@ -2,8 +2,8 @@ from devices import HP3458A
 
 
 class HP3458ALibrary:
-    def __init__(self, resource="GPIB0::2::INSTR", visa_library='@py', **kwargs):
-        self.device = HP3458A(resource, visa_library=visa_library)
+    def __init__(self, resource, **kwargs):
+        self.device = HP3458A(resource, **kwargs)
 
     def setup_device(self):
         """Setup the HP3458A device."""
