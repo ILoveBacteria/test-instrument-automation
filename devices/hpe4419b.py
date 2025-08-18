@@ -2,19 +2,23 @@ import time
 
 from pymeasure.instruments import Instrument
 
-from devices import TerminationMixin
 
-
-class HPE4419B(TerminationMixin, Instrument):
+class HPE4419B(Instrument):
     """
     Driver for the Agilent/HP E4419B Power Meter.
     
     This class provides methods for configuring, calibrating, and performing
     power measurements on one or two channels.
     """
-    
-    def __init__(self, adapter, **kwargs):
-        super().__init__(adapter, 'Hewlett-Packard HPE4419B', **kwargs)
+
+    def __init__(self, adapter, name="Hewlett-Packard E4419B", **kwargs):
+        super().__init__(
+            adapter,
+            name,
+            read_termination='\n',
+            write_termination='\n',
+            **kwargs
+        )
     
     def setup(self):
         """

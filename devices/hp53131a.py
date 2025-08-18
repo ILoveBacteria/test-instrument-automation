@@ -3,16 +3,20 @@ import time
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
-from devices import TerminationMixin
 
-
-class HP53131A(TerminationMixin, SCPIMixin, Instrument):
+class HP53131A(SCPIMixin, Instrument):
     """
     Represents the Hewlett-Packard 53131A Universal Counter.
     """
 
-    def __init__(self, adapter, **kwargs):
-        super().__init__(adapter, 'Hewlett-Packard 53131A', **kwargs)
+    def __init__(self, adapter, name="Hewlett-Packard 53131A", **kwargs):
+        super().__init__(
+            adapter,
+            name,
+            read_termination='\n',
+            write_termination='\n',
+            **kwargs
+        )
         
     # Channel-specific configuration properties
     ch1_coupling = Instrument.control(

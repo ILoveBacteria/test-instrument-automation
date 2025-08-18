@@ -2,16 +2,20 @@ from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set
 from pymeasure.instruments.hp import HPLegacyInstrument
 
-from devices import TerminationMixin
 
-
-class HP3458A(TerminationMixin, HPLegacyInstrument):
+class HP3458A(HPLegacyInstrument):
     """
     Represents the Hewlett-Packard 3458A 8.5-digit multimeter.
     """
 
-    def __init__(self, adapter, **kwargs):
-        super().__init__(adapter, 'Hewlett-Packard 3458A', **kwargs)
+    def __init__(self, adapter, name="Hewlett-Packard 3458A", **kwargs):
+        super().__init__(
+            adapter,
+            name,
+            read_termination='\n',
+            write_termination='\n',
+            **kwargs
+        )
 
     # System-level commands and properties
     id = Instrument.measurement(
