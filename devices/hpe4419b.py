@@ -2,8 +2,10 @@ import time
 
 from pymeasure.instruments import Instrument
 
+from devices import TerminationMixin
 
-class HPE4419B(Instrument):
+
+class HPE4419B(TerminationMixin, Instrument):
     """
     Driver for the Agilent/HP E4419B Power Meter.
     

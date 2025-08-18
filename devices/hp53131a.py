@@ -1,9 +1,12 @@
-from pymeasure.instruments import Instrument, SCPIMixin
-from pymeasure.instruments.validators import strict_discrete_set, strict_range
 import time
 
+from pymeasure.instruments import Instrument, SCPIMixin
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
-class HP53131A(SCPIMixin, Instrument):
+from devices import TerminationMixin
+
+
+class HP53131A(TerminationMixin, SCPIMixin, Instrument):
     """
     Represents the Hewlett-Packard 53131A Universal Counter.
     """
