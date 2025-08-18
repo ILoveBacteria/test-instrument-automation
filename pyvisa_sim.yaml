@@ -33,7 +33,7 @@ devices:
         r: "0,No Error"
       - q: "SOURce1:FREQuency?"
         r: "{RANDOM(1000, 100000, 1):.2f}"
-      - q: "SOURce1:FREQuency?"
+      - q: "SOURce2:FREQuency?"
         r: "{RANDOM(1000, 100000, 1):.2f}"
 
 resources:
