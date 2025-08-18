@@ -13,101 +13,102 @@ class AFG2225Library:
         | Library | AFG2225Library | ASRL5::INSTR |
         """
         self.device = AFG2225(resource, **kwargs)
+        self.device.setup()
 
     # ------------------ CHANNEL CONTROL ------------------
     def set_channel_shape(self, channel, shape):
         """Sets waveform shape: sine, square, ramp, pulse, noise, user."""
-        getattr(self.inst, f"ch{channel}").shape = shape
+        getattr(self.device, f"ch{channel}").shape = shape
 
     def get_channel_shape(self, channel):
         """Returns current waveform shape of a channel."""
-        return getattr(self.inst, f"ch{channel}").shape
+        return getattr(self.device, f"ch{channel}").shape
 
     def set_channel_frequency(self, channel, freq):
         """Sets channel frequency in Hz."""
-        getattr(self.inst, f"ch{channel}").frequency = float(freq)
+        getattr(self.device, f"ch{channel}").frequency = float(freq)
 
     def get_channel_frequency(self, channel):
         """Returns channel frequency in Hz."""
-        return getattr(self.inst, f"ch{channel}").frequency
+        return getattr(self.device, f"ch{channel}").frequency
 
     def set_channel_amplitude(self, channel, amplitude):
         """Sets channel amplitude in Vpp."""
-        getattr(self.inst, f"ch{channel}").amplitude = float(amplitude)
+        getattr(self.device, f"ch{channel}").amplitude = float(amplitude)
 
     def get_channel_amplitude(self, channel):
         """Returns channel amplitude in Vpp."""
-        return getattr(self.inst, f"ch{channel}").amplitude
+        return getattr(self.device, f"ch{channel}").amplitude
 
     def set_channel_offset(self, channel, offset):
         """Sets DC offset in volts."""
-        getattr(self.inst, f"ch{channel}").offset = float(offset)
+        getattr(self.device, f"ch{channel}").offset = float(offset)
 
     def get_channel_offset(self, channel):
         """Returns DC offset in volts."""
-        return getattr(self.inst, f"ch{channel}").offset
+        return getattr(self.device, f"ch{channel}").offset
 
     def set_channel_phase(self, channel, phase):
         """Sets phase in degrees."""
-        getattr(self.inst, f"ch{channel}").phase = float(phase)
+        getattr(self.device, f"ch{channel}").phase = float(phase)
 
     def get_channel_phase(self, channel):
         """Returns channel phase in degrees."""
-        return getattr(self.inst, f"ch{channel}").phase
+        return getattr(self.device, f"ch{channel}").phase
 
     def enable_channel_output(self, channel):
         """Turns ON channel output."""
-        getattr(self.inst, f"ch{channel}").output_enabled = True
+        getattr(self.device, f"ch{channel}").output_enabled = True
 
     def disable_channel_output(self, channel):
         """Turns OFF channel output."""
-        getattr(self.inst, f"ch{channel}").output_enabled = False
+        getattr(self.device, f"ch{channel}").output_enabled = False
 
     def is_channel_output_enabled(self, channel):
         """Checks if channel output is ON."""
-        return getattr(self.inst, f"ch{channel}").output_enabled
+        return getattr(self.device, f"ch{channel}").output_enabled
 
     def set_channel_load(self, channel, load):
         """Sets output load: '50ohm' or 'highZ'."""
-        getattr(self.inst, f"ch{channel}").load = load
+        getattr(self.device, f"ch{channel}").load = load
 
     def get_channel_load(self, channel):
         """Returns channel load."""
-        return getattr(self.inst, f"ch{channel}").load
+        return getattr(self.device, f"ch{channel}").load
 
     def set_channel_duty_cycle(self, channel, duty):
         """Sets duty cycle (%) for square wave."""
-        getattr(self.inst, f"ch{channel}").duty_cycle = float(duty)
+        getattr(self.device, f"ch{channel}").duty_cycle = float(duty)
 
     def get_channel_duty_cycle(self, channel):
         """Returns duty cycle (%) for square wave."""
-        return getattr(self.inst, f"ch{channel}").duty_cycle
+        return getattr(self.device, f"ch{channel}").duty_cycle
 
     def set_channel_ramp_symmetry(self, channel, symmetry):
         """Sets ramp symmetry (%) for ramp waveforms."""
-        getattr(self.inst, f"ch{channel}").ramp_symmetry = float(symmetry)
+        getattr(self.device, f"ch{channel}").ramp_symmetry = float(symmetry)
 
     def get_channel_ramp_symmetry(self, channel):
         """Returns ramp symmetry (%) for ramp waveforms."""
-        return getattr(self.inst, f"ch{channel}").ramp_symmetry
+        return getattr(self.device, f"ch{channel}").ramp_symmetry
 
     # ------------------ INSTRUMENT LEVEL ------------------
     def reset_instrument(self):
         """Resets AFG2225 to defaults."""
-        self.inst.reset()
+        self.device.reset()
 
     def sync_phase(self):
         """Synchronizes phase between CH1 and CH2."""
-        self.inst.sync_phase()
+        self.device.sync_phase()
 
     def set_remote_mode(self):
         """Locks front panel (remote mode)."""
-        self.inst.remote_mode()
+        self.device.remote_mode()
 
     def set_local_mode(self):
         """Unlocks front panel (local mode)."""
-        self.inst.local_mode()
+        self.device.local_mode()
 
     def get_error(self):
         """Returns next error message from the instrument."""
-        return self.inst.error
+        return self.device.error

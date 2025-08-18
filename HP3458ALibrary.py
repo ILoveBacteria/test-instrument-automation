@@ -15,6 +15,7 @@ class HP3458ALibrary:
         | Library | HP3458ALibrary | GPIB0::22::INSTR |
         """
         self.device = HP3458A(resource, **kwargs)
+        self.device.setup()
 
     # --- Identification & System Status ---
 

@@ -15,6 +15,7 @@ class HP53131ALibrary:
         | Library | HP53131ALibrary | GPIB0::3::INSTR |
         """
         self.device = HP53131A(resource, **kwargs)
+        self.device.setup()
 
     # --- Identification and Status ---
 

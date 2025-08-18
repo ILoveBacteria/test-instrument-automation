@@ -169,6 +169,9 @@ class AFG2225(SCPIMixin, Instrument):
         )
         self.ch1 = AFG2225Channel(self, 1)
         self.ch2 = AFG2225Channel(self, 2)
+        
+    def setup(self):
+        self.reset()
 
     def reset(self):
         """Resets the instrument to its factory default state."""
