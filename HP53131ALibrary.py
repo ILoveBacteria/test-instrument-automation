@@ -1,4 +1,9 @@
+import logging
+
 from devices import HP53131A
+
+
+logger = logging.getLogger(__name__)
 
 
 class HP53131ALibrary:
@@ -6,16 +11,28 @@ class HP53131ALibrary:
     Robot Framework library wrapper for controlling the HP 53131A Universal Counter.
     Provides high-level keywords that map to the HP53131A class methods.
     """
+    def __init__(self):
+        self.device = None
 
-    def __init__(self, resource, **kwargs):
+    # ------------------ CONNECTION ------------------
+    def open_connection(self, resource, **kwargs):
         """
-        create a connection to the device.
-
+        Opens connection to the HP53131A.
         Example:
-        | Library | HP53131ALibrary | GPIB0::3::INSTR |
+        | Open Connection | GPIB0::3::INSTR |
         """
         self.device = HP53131A(resource, **kwargs)
+        logger.info(f"Connected to HP53131A at {resource}")
         self.device.setup()
+
+    def close_connection(self):
+        """
+        Closes the instrument connection.
+        """
+        if self.device:
+            self.device.adapter.connection.close()
+            self.device = None
+            logger.info("Connection closed from AFG2225.")
 
     # --- Identification and Status ---
 

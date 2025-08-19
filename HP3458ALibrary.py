@@ -1,4 +1,9 @@
+import logging
+
 from devices import HP3458A
+
+
+logger = logging.getLogger(__name__)
 
 
 class HP3458ALibrary:
@@ -6,16 +11,28 @@ class HP3458ALibrary:
     Robot Framework library wrapper for controlling the HP 3458A Multimeter.
     Provides keywords for configuration, measurement, and device utilities.
     """
+    def __init__(self):
+        self.device = None
 
-    def __init__(self, resource, **kwargs):
+    # ------------------ CONNECTION ------------------
+    def open_connection(self, resource, **kwargs):
         """
-        Optionally open a connection when the library is imported.
-
+        Opens connection to the HP3458A.
         Example:
-        | Library | HP3458ALibrary | GPIB0::22::INSTR |
+        | Open Connection | GPIB0::2::INSTR |
         """
         self.device = HP3458A(resource, **kwargs)
+        logger.info(f"Connected to HP3458A at {resource}")
         self.device.setup()
+
+    def close_connection(self):
+        """
+        Closes the instrument connection.
+        """
+        if self.device:
+            self.device.adapter.connection.close()
+            self.device = None
+            logger.info("Connection closed from HP3458A.")
 
     # --- Identification & System Status ---
 

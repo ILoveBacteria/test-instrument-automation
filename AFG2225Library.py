@@ -1,4 +1,9 @@
+import logging
+
 from devices import AFG2225
+
+
+logger = logging.getLogger(__name__)
 
 
 class AFG2225Library:
@@ -6,14 +11,28 @@ class AFG2225Library:
     Robot Framework Library for controlling GW Instek AFG-2225 Function Generator.
     Provides high-level keywords to configure channels, frequency, amplitude, etc.
     """
-    def __init__(self, resource, **kwargs):
+    def __init__(self):
+        self.device = None
+
+    # ------------------ CONNECTION ------------------
+    def open_connection(self, resource, **kwargs):
         """
         Opens connection to the AFG2225.
         Example:
-        | Library | AFG2225Library | ASRL5::INSTR |
+        | Open Connection | ASRL5::INSTR |
         """
         self.device = AFG2225(resource, **kwargs)
+        logger.info(f"Connected to AFG2225 at {resource}")
         self.device.setup()
+
+    def close_connection(self):
+        """
+        Closes the instrument connection.
+        """
+        if self.device:
+            self.device.adapter.connection.close()
+            self.device = None
+            logger.info("Connection closed from AFG2225.")
 
     # ------------------ CHANNEL CONTROL ------------------
     def set_channel_shape(self, channel, shape):
