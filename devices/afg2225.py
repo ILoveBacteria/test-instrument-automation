@@ -112,7 +112,7 @@ class AFG2225(SCPIMixin, Instrument):
         
     def setup(self):
         self.reset()
-        time.sleep(1)
+        time.sleep(2)
         self.clear()
         # Enable the Operation Complete bit (1) to be summarized in the Status Byte
         self.write('*ESE 1')
@@ -124,7 +124,7 @@ class AFG2225(SCPIMixin, Instrument):
         self.write("*RST")
         
     def write(self, command, **kwargs):
-        time.sleep(0.1)  # Allow time for the instrument to process commands
+        time.sleep(0.5)  # Allow time for the instrument to process commands
         return super().write(command, **kwargs)
         
     def wait_for_opc(self, timeout=5, poll_interval=0.5):
