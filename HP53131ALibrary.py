@@ -1,4 +1,6 @@
 import logging
+import redis
+import json
 
 from devices import HP53131A
 
@@ -13,6 +15,14 @@ class HP53131ALibrary:
     """
     def __init__(self):
         self.device = None
+        self._r = None
+        try:
+            self._r = redis.Redis(host='localhost', port=6379, decode_responses=True)
+        except Exception as e:
+            print(e)
+
+    def _pub(self, event: dict):
+        self._r.publish('robot_events', json.dumps(event))
 
     # ------------------ CONNECTION ------------------
     def open_connection(self, resource, **kwargs):
@@ -32,7 +42,7 @@ class HP53131ALibrary:
         if self.device:
             self.device.adapter.connection.close()
             self.device = None
-            logger.info("Connection closed from AFG2225.")
+            logger.info("Connection closed from HP53131A.")
 
     # --- Identification and Status ---
 
@@ -112,7 +122,10 @@ class HP53131ALibrary:
 
     def initiate_wait_and_fetch(self, timeout: int = 10) -> float:
         """Initiates measurement, waits, and fetches the result."""
-        return self.device.initiate_wait_fetch(timeout)
+        data = self.device.initiate_wait_fetch(timeout)
+        if self._r:
+            self._pub({'type': 'data', 'owner': 'HP53131A', 'data': data})
+        return data
 
     def fetch_average_result(self) -> float:
         """Fetches an averaged measurement result."""
