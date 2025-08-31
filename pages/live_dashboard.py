@@ -11,8 +11,8 @@ if 'device_data' not in st.session_state:
     st.session_state.device_data = {
         'HP53131A': {'measurement': 'N/A', 'status': 'OK'},
         'HP3458A': {'measurement': 'N/A', 'status': 'OK'},
-        'HP8970B': {'measurement': 'N/A', 'status': 'OK'},
-        'HP8510C': {'measurement': 'N/A', 'status': 'OK'},
+        'HP1234B': {'measurement': 'N/A', 'status': 'OK'},
+        'HP4321C': {'measurement': 'N/A', 'status': 'OK'},
     }
 if 'execution_log' not in st.session_state:
     st.session_state.execution_log = []
@@ -23,25 +23,20 @@ if 'pubsub' not in st.session_state:
 
 # --- Helper Functions ---
 def format_log_message(msg):
-    """Formats a log message with icons and colors based on status."""
+    """Formats a log message with a simpler text-based format."""
     action = msg.get('action', '')
-    msg_type = msg.get('type', '').title()
+    msg_type = msg.get('type', '') # Keep it lowercase as per user example
     name = msg.get('name', '')
     status = msg.get('status', '')
 
-    if status == 'PASS':
-        icon = '✅'
-        color = 'green'
-        status_text = f'**:{color}[{status}]**'
-    elif status == 'FAIL':
-        icon = '❌'
-        color = 'red'
-        status_text = f'**:{color}[{status}]**'
-    else:
-        icon = '▶️' if action == 'start' else '⏹️'
-        status_text = status
+    log_string = f"{action} {msg_type}: {name}"
 
-    return f'{icon} {action.title()} {msg_type}: `{name}` - {status_text}'
+    if status == 'PASS':
+        return f"{log_string} - **:green[{status}]**"
+    elif status == 'FAIL':
+        return f"{log_string} - **:red[{status}]**"
+    
+    return log_string # For start/end actions without a final status
 
 # --- UI Layout ---
 st.sidebar.header("Redis Connection")
@@ -76,33 +71,37 @@ if st.sidebar.button("Stop Listening"):
     st.sidebar.info("Stopped listening.")
 
 
-st.header("Device Status")
+# --- Main Page Layout ---
+# Create two main columns: one for the device statuses, one for the log
+main_area, right_sidebar = st.columns([3, 1])
 
-# --- Dynamic Row/Column Logic ---
-COLS_PER_ROW = 3 # Max number of devices per row
-device_names = list(st.session_state.device_data.keys())
-placeholders = {}
+with main_area:
+    st.header("Device Status")
 
-# Group device names into chunks for each row
-device_chunks = [device_names[i:i + COLS_PER_ROW] for i in range(0, len(device_names), COLS_PER_ROW)]
+    # --- Dynamic Row/Column Logic ---
+    COLS_PER_ROW = 3 # Max number of devices per row
+    device_names = list(st.session_state.device_data.keys())
+    placeholders = {}
 
-for chunk in device_chunks:
-    # Create columns for the current row
-    device_cols = st.columns(len(chunk))
-    for i, device_name in enumerate(chunk):
-        # Assign the placeholder to the correct column
-        with device_cols[i]:
-            placeholders[device_name] = st.empty()
+    # Group device names into chunks for each row
+    device_chunks = [device_names[i:i + COLS_PER_ROW] for i in range(0, len(device_names), COLS_PER_ROW)]
 
+    for chunk in device_chunks:
+        # Create columns for the current row
+        device_cols = st.columns(len(chunk))
+        for i, device_name in enumerate(chunk):
+            # Assign the placeholder to the correct column
+            with device_cols[i]:
+                placeholders[device_name] = st.empty()
 
-st.markdown("---")
-st.header("Test Execution Log")
-log_placeholder = st.empty()
+with right_sidebar:
+    st.header("Test Execution Log")
+    log_placeholder = st.empty()
 
 
 # --- Main Loop ---
 if not st.session_state.pubsub:
-    st.info("Connect to a Redis server using the sidebar to see live data.")
+    main_area.info("Connect to a Redis server using the sidebar to see live data.")
 else:
     # Continuously check for messages
     while True:
@@ -118,7 +117,8 @@ else:
                     st.success(f"**{device_name}**")
                     st.metric("Last Measurement", data['measurement'])
         
-        log_placeholder.markdown("\n\n".join(st.session_state.execution_log[::-1]), unsafe_allow_html=True)
+        with right_sidebar:
+            log_placeholder.markdown("\n\n".join(st.session_state.execution_log[::-1]), unsafe_allow_html=True)
 
         # Process new message from Redis
         message = st.session_state.pubsub.get_message(ignore_subscribe_messages=True, timeout=0.1)
