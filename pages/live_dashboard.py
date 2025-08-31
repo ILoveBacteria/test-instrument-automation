@@ -112,11 +112,10 @@ else:
             with placeholder.container(border=True):
                 # Using a combination of st.error/success and markdown for colored headers
                 if data['status'] == 'ERROR':
-                    st.markdown(f'<p style="background-color:rgba(255, 75, 75, 0.3); color:rgb(255, 75, 75); padding:10px; border-radius:5px; margin:0;"><strong>{device_name}</strong></p>', unsafe_allow_html=True)
+                    st.error(f"**{device_name}**")
                     st.metric("Last Measurement", data['measurement'], delta="Error Detected", delta_color="inverse")
-
                 else:
-                    st.markdown(f'<p style="background-color:rgba(4, 221, 125, 0.2); color:rgb(4, 221, 125); padding:10px; border-radius:5px; margin:0;"><strong>{device_name}</strong></p>', unsafe_allow_html=True)
+                    st.success(f"**{device_name}**")
                     st.metric("Last Measurement", data['measurement'])
         
         log_placeholder.markdown("\n\n".join(st.session_state.execution_log[::-1]), unsafe_allow_html=True)
