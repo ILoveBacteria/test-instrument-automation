@@ -1,28 +1,22 @@
 import logging
-import redis
-import json
 
 from devices import HP53131A
+from robot_library import BaseLibrary, publish_result
 
 
 logger = logging.getLogger(__name__)
 
 
-class HP53131ALibrary:
+class HP53131ALibrary(BaseLibrary):
     """
     Robot Framework library wrapper for controlling the HP 53131A Universal Counter.
     Provides high-level keywords that map to the HP53131A class methods.
     """
+    NAME = 'HP53131A'
+    
     def __init__(self):
+        super().__init__()
         self.device = None
-        self._r = None
-        try:
-            self._r = redis.Redis(host='localhost', port=6379, decode_responses=True)
-        except Exception as e:
-            print(e)
-
-    def _pub(self, event: dict):
-        self._r.publish('robot_events', json.dumps(event))
 
     # ------------------ CONNECTION ------------------
     def open_connection(self, resource, **kwargs):
@@ -120,12 +114,10 @@ class HP53131ALibrary:
         """Waits for measurement completion and fetches the result."""
         return self.device.wait_and_fetch(timeout)
 
+    @publish_result
     def initiate_wait_and_fetch(self, timeout: int = 10) -> float:
         """Initiates measurement, waits, and fetches the result."""
-        data = self.device.initiate_wait_fetch(timeout)
-        if self._r:
-            self._pub({'type': 'data', 'owner': 'HP53131A', 'data': data})
-        return data
+        return self.device.initiate_wait_fetch(timeout)
 
     def fetch_average_result(self) -> float:
         """Fetches an averaged measurement result."""
