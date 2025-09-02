@@ -1,17 +1,21 @@
 import logging
 
 from devices import AFG2225
+from robot_library import BaseLibrary, publish_result, measure
 
 
 logger = logging.getLogger(__name__)
 
 
-class AFG2225Library:
+class AFG2225Library(BaseLibrary):
     """
     Robot Framework Library for controlling GW Instek AFG-2225 Function Generator.
     Provides high-level keywords to configure channels, frequency, amplitude, etc.
     """
+    NAME = 'Function Generator'
+    
     def __init__(self):
+        super().__init__()
         self.device = None
 
     # ------------------ CONNECTION ------------------
@@ -47,6 +51,8 @@ class AFG2225Library:
         """Sets channel frequency in Hz."""
         getattr(self.device, f"ch{channel}").frequency = float(freq)
 
+    @publish_result
+    @measure('frequency', 'Hz')
     def get_channel_frequency(self, channel):
         """Returns channel frequency in Hz."""
         return getattr(self.device, f"ch{channel}").frequency

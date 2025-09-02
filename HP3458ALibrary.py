@@ -12,7 +12,7 @@ class HP3458ALibrary(BaseLibrary):
     Robot Framework library wrapper for controlling the HP 3458A Multimeter.
     Provides keywords for configuration, measurement, and device utilities.
     """
-    NAME: str = 'Multimeter'
+    NAME = 'Multimeter'
     
     def __init__(self):
         super().__init__()
