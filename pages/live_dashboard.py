@@ -7,13 +7,8 @@ st.set_page_config(layout='wide', page_title='Live Monitoring Dashboard')
 
 # --- Session State Initialization ---
 if 'device_data' not in st.session_state:
-    # Add more devices to demonstrate the wrapping layout
-    st.session_state.device_data = {
-        'HP53131A': {'measurement': 'N/A', 'status': 'OK'},
-        'HP3458A': {'measurement': 'N/A', 'status': 'OK'},
-        'HP1234B': {'measurement': 'N/A', 'status': 'OK'},
-        'HP4321C': {'measurement': 'N/A', 'status': 'OK'},
-    }
+    # Start with an empty dictionary. Devices will be added dynamically as data arrives.
+    st.session_state.device_data = {}
 if 'execution_log' not in st.session_state:
     st.session_state.execution_log = []
 if 'redis_client' not in st.session_state:
@@ -46,17 +41,18 @@ redis_channel = st.sidebar.text_input("Channel", "robot_events")
 
 if st.sidebar.button("Connect and Start Listening"):
     try:
+        # Clear state on new connection attempt
+        st.session_state.device_data = {}
+        st.session_state.execution_log = ["--- Listening for new test runs ---"]
+        
         r = redis.Redis(host=redis_host, port=redis_port, decode_responses=True)
         r.ping()
         st.session_state.redis_client = r
         st.session_state.pubsub = st.session_state.redis_client.pubsub()
         st.session_state.pubsub.subscribe(redis_channel)
         st.sidebar.success(f"Subscribed to channel '{redis_channel}'")
-        # Reset state on new connection
-        st.session_state.execution_log = ["--- Listening for new test runs ---"]
-        for device in st.session_state.device_data:
-            st.session_state.device_data[device]['status'] = 'OK'
-            st.session_state.device_data[device]['measurement'] = 'N/A'
+        st.rerun()
+
     except Exception as e:
         st.sidebar.error(f"Failed to connect to Redis: {e}")
         st.session_state.redis_client = None
@@ -72,25 +68,26 @@ if st.sidebar.button("Stop Listening"):
 
 
 # --- Main Page Layout ---
-# Create two main columns: one for the device statuses, one for the log
 main_area, right_sidebar = st.columns([3, 1])
 
 with main_area:
     st.header("Device Status")
 
+    # This section now handles the case where no devices have been discovered yet
+    if not st.session_state.device_data:
+        st.info("Waiting for first measurement data to populate devices...")
+
     # --- Dynamic Row/Column Logic ---
     COLS_PER_ROW = 3 # Max number of devices per row
-    device_names = list(st.session_state.device_data.keys())
+    # Sort to maintain a consistent order
+    device_names = sorted(list(st.session_state.device_data.keys()))
     placeholders = {}
 
-    # Group device names into chunks for each row
     device_chunks = [device_names[i:i + COLS_PER_ROW] for i in range(0, len(device_names), COLS_PER_ROW)]
 
     for chunk in device_chunks:
-        # Create columns for the current row
         device_cols = st.columns(len(chunk))
         for i, device_name in enumerate(chunk):
-            # Assign the placeholder to the correct column
             with device_cols[i]:
                 placeholders[device_name] = st.empty()
 
@@ -103,19 +100,18 @@ with right_sidebar:
 if not st.session_state.pubsub:
     main_area.info("Connect to a Redis server using the sidebar to see live data.")
 else:
-    # Continuously check for messages
     while True:
-        # Update UI with current state
+        # Update UI with current state for existing devices
         for device_name, placeholder in placeholders.items():
-            data = st.session_state.device_data[device_name]
-            with placeholder.container(border=True):
-                # Using a combination of st.error/success and markdown for colored headers
-                if data['status'] == 'ERROR':
-                    st.error(f"**{device_name}**")
-                    st.metric("Last Measurement", data['measurement'], delta="Error Detected", delta_color="inverse")
-                else:
-                    st.success(f"**{device_name}**")
-                    st.metric("Last Measurement", data['measurement'])
+            if device_name in st.session_state.device_data:
+                data = st.session_state.device_data[device_name]
+                with placeholder.container(border=True):
+                    if data['status'] == 'ERROR':
+                        st.error(f"**{device_name}**")
+                        st.metric("Last Measurement", data['measurement'], delta="Error Detected", delta_color="inverse")
+                    else:
+                        st.success(f"**{device_name}**")
+                        st.metric("Last Measurement", data['measurement'])
         
         with right_sidebar:
             log_placeholder.markdown("\n\n".join(st.session_state.execution_log[::-1]), unsafe_allow_html=True)
@@ -128,16 +124,20 @@ else:
 
             if msg_type == 'data':
                 owner = msg_data.get('owner')
+                
+                # DYNAMIC DEVICE ADDITION LOGIC
+                if owner and owner not in st.session_state.device_data:
+                    st.session_state.device_data[owner] = {'measurement': 'N/A', 'status': 'OK'}
+                    st.rerun() # Rerun the script to redraw UI with the new device box
+
                 if owner in st.session_state.device_data:
                     st.session_state.device_data[owner]['measurement'] = msg_data.get('data')
 
             elif msg_type in ['suite', 'keyword']:
-                # Reset error status on new suite start
                 if msg_type == 'suite' and msg_data.get('action') == 'start':
-                     for device in st.session_state.device_data:
-                        st.session_state.device_data[device]['status'] = 'OK'
+                     for device in st.session_state.device_data.values():
+                        device['status'] = 'OK'
                 
-                # Check for failures and associate with a device
                 if msg_data.get('status') == 'FAIL':
                     name = msg_data.get('name', '').upper()
                     for device_name in st.session_state.device_data:
@@ -147,5 +147,4 @@ else:
                 log_entry = format_log_message(msg_data)
                 st.session_state.execution_log.append(log_entry)
         
-        # Small delay to prevent high CPU usage
         time.sleep(0.1)
