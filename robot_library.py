@@ -4,7 +4,7 @@ import functools
 
 
 class BaseLibrary:
-    NAME: str = None
+    NAME: str = 'unknown_device'
     
     def __init__(self):
         self.measure_type_status = 'unknown'
@@ -27,6 +27,12 @@ class BaseLibrary:
             'measure_type_status': self.measure_type_status,
             'measure_unit_status': self.measure_unit_status,
             }
+    
+    def open_connection(self, resource, **kwargs):
+        raise NotImplementedError("This method should be implemented by subclasses.")
+    
+    def close_connection(self):
+        raise NotImplementedError("This method should be implemented by subclasses.")
     
     
 def publish_result(func):
