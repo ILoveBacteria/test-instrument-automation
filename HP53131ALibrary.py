@@ -12,7 +12,7 @@ class HP53131ALibrary(BaseLibrary):
     Robot Framework library wrapper for controlling the HP 53131A Universal Counter.
     Provides high-level keywords that map to the HP53131A class methods.
     """
-    NAME = 'HP53131A'
+    NAME = 'Counter'
     
     def __init__(self):
         super().__init__()

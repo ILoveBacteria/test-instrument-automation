@@ -1,17 +1,21 @@
 import logging
 
 from devices import HP3458A
+from robot_library import BaseLibrary, publish_result, measure
 
 
 logger = logging.getLogger(__name__)
 
 
-class HP3458ALibrary:
+class HP3458ALibrary(BaseLibrary):
     """
     Robot Framework library wrapper for controlling the HP 3458A Multimeter.
     Provides keywords for configuration, measurement, and device utilities.
     """
+    NAME: str = 'Multimeter'
+    
     def __init__(self):
+        super().__init__()
         self.device = None
 
     # ------------------ CONNECTION ------------------
@@ -66,6 +70,7 @@ class HP3458ALibrary:
 
     # --- Basic Reading ---
 
+    @publish_result
     def get_reading(self, trig: bool = True):
         """
         Triggers a single reading and returns the value.
@@ -113,38 +118,47 @@ class HP3458ALibrary:
 
     # --- Measurement Configurations ---
 
+    @measure('dc voltage', 'V')
     def configure_dcv(self, mrange=None, nplc=1, autozero=True, hiz=False):
         """Configures the device for DC Voltage measurement."""
         self.device.conf_function_DCV(mrange, nplc, autozero, hiz)
 
+    @measure('dc current', 'A')
     def configure_dci(self, mrange=None, nplc=1, autozero=True, hiz=False):
         """Configures the device for DC Current measurement."""
         self.device.conf_function_DCI(mrange, nplc, autozero, hiz)
 
+    @measure('ac voltage', 'V')
     def configure_acv(self, mrange=None, nplc=1):
         """Configures the device for AC Voltage measurement."""
         self.device.conf_function_ACV(mrange, nplc)
 
+    @measure('ac current', 'A')
     def configure_aci(self, mrange=None, nplc=1):
         """Configures the device for AC Current measurement."""
         self.device.conf_function_ACI(mrange, nplc)
 
+    @measure('2-wire resistance', 'Ohm')
     def configure_ohm2w(self, mrange=None, nplc=1, autozero=True, offset_comp=False):
         """Configures the device for 2-Wire Resistance measurement."""
         self.device.conf_function_OHM2W(mrange, nplc, autozero, offset_comp)
 
+    @measure('4-wire resistance', 'Ohm')
     def configure_ohm4w(self, mrange=None, nplc=1, autozero=True, offset_comp=False):
         """Configures the device for 4-Wire Resistance measurement."""
         self.device.conf_function_OHM4W(mrange, nplc, autozero, offset_comp)
 
+    @measure('frequency', 'Hz')
     def configure_frequency(self, mrange="AUTO", gate_time=1.0):
         """Configures the device for Frequency measurement."""
         self.device.conf_function_FREQ(mrange, gate_time)
 
+    @measure('ac+dc voltage', 'V')
     def configure_acdcv(self, mrange=None, nplc=1, ac_bandwidth_low=20, hiz=False):
         """Configures the device for combined AC+DC Voltage measurement."""
         self.device.conf_function_ACDCV(mrange, nplc, ac_bandwidth_low, hiz)
 
+    @measure('digitized data', 'V')
     def configure_digitize(self, mode="DSDC", mrange=10, delay=0,
                            num_samples=1024, sample_interval=100e-9):
         """Configures the device for high-speed digitizing mode."""
