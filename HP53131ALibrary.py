@@ -1,7 +1,7 @@
 import logging
 
 from devices import HP53131A
-from robot_library import BaseLibrary, publish_result
+from robot_library import BaseLibrary, publish_result, measure
 
 
 logger = logging.getLogger(__name__)
@@ -84,18 +84,22 @@ class HP53131ALibrary(BaseLibrary):
 
     # --- Measurements ---
 
+    @measure('frequency', 'Hz')
     def measure_frequency(self, channel: int, expected_value: str = 'DEF', resolution: str = 'DEF'):
         """Configures frequency measurement on a channel."""
         self.device.measure_frequency(channel, expected_value, resolution)
 
+    @measure('frequency', 'Hz')
     def measure_frequency_gated(self, gate_time: float, channel: int = 1):
         """Configures gated frequency measurement."""
         self.device.measure_frequency_gated(gate_time, channel)
 
+    @measure('period', 's')
     def measure_period(self, channel: int, expected_value: str = 'DEF', resolution: str = 'DEF'):
         """Configures period measurement on a channel."""
         self.device.measure_period(channel, expected_value, resolution)
 
+    @measure('interval', 's')
     def measure_time_interval(self):
         """Configures time interval measurement (Ch1 start, Ch2 stop)."""
         self.device.measure_time_interval()

@@ -106,12 +106,16 @@ else:
             if device_name in st.session_state.device_data:
                 data = st.session_state.device_data[device_name]
                 with placeholder.container(border=True):
+                    # Prepare the metric display with new data
+                    metric_label = data.get('type', 'Measurement').title()
+                    metric_value = f"{data.get('measurement', 'N/A')} {data.get('unit', '')}".strip()
+
                     if data['status'] == 'ERROR':
                         st.error(f"**{device_name}**")
-                        st.metric("Last Measurement", data['measurement'], delta="Error Detected", delta_color="inverse")
+                        st.metric(metric_label, metric_value, delta="Error Detected", delta_color="inverse")
                     else:
                         st.success(f"**{device_name}**")
-                        st.metric("Last Measurement", data['measurement'])
+                        st.metric(metric_label, metric_value)
         
         with right_sidebar:
             log_placeholder.markdown("\n\n".join(st.session_state.execution_log[::-1]), unsafe_allow_html=True)
@@ -127,11 +131,20 @@ else:
                 
                 # DYNAMIC DEVICE ADDITION LOGIC
                 if owner and owner not in st.session_state.device_data:
-                    st.session_state.device_data[owner] = {'measurement': 'N/A', 'status': 'OK'}
+                    # Initialize new device with all required keys
+                    st.session_state.device_data[owner] = {
+                        'measurement': 'N/A', 
+                        'status': 'OK',
+                        'type': 'N/A',
+                        'unit': ''
+                    }
                     st.rerun() # Rerun the script to redraw UI with the new device box
 
                 if owner in st.session_state.device_data:
+                    # Update all measurement-related data
                     st.session_state.device_data[owner]['measurement'] = msg_data.get('data')
+                    st.session_state.device_data[owner]['type'] = msg_data.get('measure_type_status', 'Measurement')
+                    st.session_state.device_data[owner]['unit'] = msg_data.get('measure_unit_status', '')
 
             elif msg_type in ['suite', 'keyword']:
                 if msg_type == 'suite' and msg_data.get('action') == 'start':
