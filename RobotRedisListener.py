@@ -11,23 +11,31 @@ class RobotRedisListener:
         self.host = host
         self.port = port
         self.channel = channel
+        self.connected = False
         self._r = redis.Redis(host=self.host, port=self.port, decode_responses=True)
+        try:
+            self._r.ping()
+            self.connected = True
+        except redis.ConnectionError:
+            print(f"Could not connect to Redis at {self.host}:{self.port}")
 
     def _pub(self, event: dict):
-        self._r.publish(self.channel, json.dumps(event))
+        print(event)
+        if self.connected:
+            self._r.publish(self.channel, json.dumps(event))
 
     def start_suite(self, data, result):
         result = result.to_dict()
-        self._pub({'type': 'suite', 'action': 'start', 'name': result['name'], 'status': result['status'], 'start_time': result['start_time'], 'elapsed_time': result['elapsed_time']})
+        self._pub({'lineno': -1, 'type': 'suite', 'action': 'start', 'name': result['name'], 'status': result['status'], 'start_time': result['start_time'], 'elapsed_time': result['elapsed_time']})
 
     def end_suite(self, data, result):
         result = result.to_dict()
-        self._pub({'type': 'suite', 'action': 'end', 'name': result['name'], 'status': result['status'], 'start_time': result['start_time'], 'elapsed_time': result['elapsed_time']})
+        self._pub({'lineno': -1, 'type': 'suite', 'action': 'end', 'name': result['name'], 'status': result['status'], 'start_time': result['start_time'], 'elapsed_time': result['elapsed_time']})
 
     def start_keyword(self, data, result):
         result = result.to_dict()
-        self._pub({'type': 'keyword', 'action': 'start', 'name': result['name'], 'status': result['status'], 'start_time': result['start_time'], 'elapsed_time': result['elapsed_time']})
+        self._pub({'lineno': data.lineno, 'type': 'keyword', 'action': 'start', 'name': result['name'], 'status': result['status'], 'start_time': result['start_time'], 'elapsed_time': result['elapsed_time']})
 
     def end_keyword(self, data, result):
         result = result.to_dict()
-        self._pub({'type': 'keyword', 'action': 'end', 'name': result['name'], 'status': result['status'], 'start_time': result['start_time'], 'elapsed_time': result['elapsed_time']})
+        self._pub({'lineno': data.lineno, 'type': 'keyword', 'action': 'end', 'name': result['name'], 'status': result['status'], 'start_time': result['start_time'], 'elapsed_time': result['elapsed_time']})
