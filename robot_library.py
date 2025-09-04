@@ -26,10 +26,10 @@ class BaseLibrary:
         return {
             'type': 'data', 
             'owner': self.NAME, 
-            'data': result, 
-            'measure_type_status': self.measure_type_status,
-            'measure_unit_status': self.measure_unit_status,
-            }
+            'data': [
+                [{'value': result, 'value_type': self.measure_type_status, 'value_unit': self.measure_unit_status}],    
+            ], 
+        }
     
     def open_connection(self, resource, **kwargs):
         raise NotImplementedError("This method should be implemented by subclasses.")
@@ -43,7 +43,7 @@ def publish_result(func):
     def wrapper(self: BaseLibrary, *args, **kwargs):
         result = func(self, *args, **kwargs)
         # publish to Redis
-        if self._r:
+        if self.connected:
             self.publish(self.publish_format(result))
         return result
     return wrapper
