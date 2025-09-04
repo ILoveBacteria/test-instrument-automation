@@ -5,6 +5,8 @@ import functools
 
 class BaseLibrary:
     NAME: str = 'unknown_device'
+    CHANNELS = None
+    FIELDS = None
     
     def __init__(self):
         self.measure_type_status = 'unknown'
@@ -45,6 +47,39 @@ def publish_result(func):
         # publish to Redis
         if self.connected:
             self.publish(self.publish_format(result))
+        return result
+    return wrapper
+
+
+def publish_status(func):
+    @functools.wraps(func)
+    def wrapper(self: BaseLibrary, *args, **kwargs):
+        result = func(self, *args, **kwargs)
+        status = [[] for _ in range(self.CHANNELS)]
+        for ch in range(self.CHANNELS):
+            channel_obj = getattr(self.device, f'ch{ch+1}')
+            status[ch].append({
+                'value': channel_obj.frequency,
+                'value_type': 'frequency',
+                'value_unit': 'Hz'
+            })
+            status[ch].append({
+                'value': channel_obj.amplitude,
+                'value_type': 'amplitude',
+                'value_unit': 'Vpp'
+            })
+            status[ch].append({
+                'value': channel_obj.shape,
+                'value_type': 'shape',
+                'value_unit': '-'
+            })
+
+        if self.connected:
+            self.publish({
+                'type': 'data',
+                'owner': self.NAME,
+                'data': status
+            })
         return result
     return wrapper
 
