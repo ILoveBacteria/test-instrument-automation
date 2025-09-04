@@ -9,15 +9,18 @@ class BaseLibrary:
     def __init__(self):
         self.measure_type_status = 'unknown'
         self.measure_unit_status = 'unknown'
-        self._r = None
+        self.connected = False
+        self._r = redis.Redis(host='localhost', port=6379, decode_responses=True)
         try:
-            self._r = redis.Redis(host='localhost', port=6379, decode_responses=True)
+            self._r.ping()
             self.publish(self.publish_format(0.0))
-        except Exception as e:
-            print(e)
+            self.connected = True
+        except redis.ConnectionError:
+            print(f"Could not connect to Redis")
 
     def publish(self, event: dict):
-        self._r.publish('robot_events', json.dumps(event))
+        if self.connected:
+            self._r.publish('robot_events', json.dumps(event))
         
     def publish_format(self, result: float) -> dict:
         return {
