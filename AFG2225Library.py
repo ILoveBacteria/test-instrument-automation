@@ -1,7 +1,7 @@
 import logging
 
 from devices import AFG2225
-from robot_library import BaseLibrary, publish_result, measure
+from robot_library import BaseLibrary, publish_status
 
 
 logger = logging.getLogger(__name__)
@@ -13,6 +13,8 @@ class AFG2225Library(BaseLibrary):
     Provides high-level keywords to configure channels, frequency, amplitude, etc.
     """
     NAME = 'Function Generator'
+    CHANNELS = 2
+    # FIELDS = ['frequency', 'amplitude']
     
     def __init__(self):
         super().__init__()
@@ -39,6 +41,7 @@ class AFG2225Library(BaseLibrary):
             logger.info("Connection closed from AFG2225.")
 
     # ------------------ CHANNEL CONTROL ------------------
+    @publish_status
     def set_channel_shape(self, channel, shape):
         """Sets waveform shape: sine, square, ramp, pulse, noise, user."""
         getattr(self.device, f"ch{channel}").shape = shape
@@ -47,16 +50,16 @@ class AFG2225Library(BaseLibrary):
         """Returns current waveform shape of a channel."""
         return getattr(self.device, f"ch{channel}").shape
 
+    @publish_status
     def set_channel_frequency(self, channel, freq):
         """Sets channel frequency in Hz."""
         getattr(self.device, f"ch{channel}").frequency = float(freq)
 
-    @publish_result
-    @measure('frequency', 'Hz')
     def get_channel_frequency(self, channel):
         """Returns channel frequency in Hz."""
         return getattr(self.device, f"ch{channel}").frequency
 
+    @publish_status
     def set_channel_amplitude(self, channel, amplitude):
         """Sets channel amplitude in Vpp."""
         getattr(self.device, f"ch{channel}").amplitude = float(amplitude)
