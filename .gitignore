@@ -8,3 +8,8 @@ log.html
 output.xml
 report.html
 results/
+
+# robot dashboard
+
+robot_dashboard*.html
+robot_results.db
