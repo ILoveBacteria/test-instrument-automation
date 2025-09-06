@@ -4,7 +4,7 @@ from devices.can.base import CANBase
 class FSS(CANBase):
     MESSAGE_ID = 0x064
 
-    def __init__(self, channel: str, bitrate: int):
+    def __init__(self, channel: str, bitrate: int = 500_000):
         super().__init__(channel, bitrate)
 
     def c(self):

@@ -5,7 +5,7 @@ from devices.can.base import CANBase
 class TCU(CANBase):
     MESSAGE_ID = 0x032
 
-    def __init__(self, channel: str, bitrate: int):
+    def __init__(self, channel: str, bitrate: int = 500_000):
         super().__init__(channel, bitrate)
 
     def tcustmon(self):
