@@ -13,10 +13,10 @@ class BaseLibrary:
         self._r = redis.Redis(host='localhost', port=6379, decode_responses=True)
         try:
             self._r.ping()
-            self.publish(self.publish_format(0.0))
             self.connected = True
         except redis.ConnectionError:
             print(f"Could not connect to Redis")
+        self.publish(self.publish_format(0.0))
 
     def publish(self, event: dict):
         if self.connected:
