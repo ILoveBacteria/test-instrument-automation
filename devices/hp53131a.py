@@ -286,7 +286,7 @@ class HP53131A(SCPIMixin, Instrument):
         """
         self.write(f':INIT:CONT {int(enabled)}')
     
-    def measurement_configuration(self, channel: int, coupling: str = 'DC', slope: str = 'POS', attenuation_x: int = 1, trigger_level: float = 0):
+    def measurement_configuration(self, channel: int, coupling: str = 'AC', slope: str = 'POS', attenuation_x: int = 1, trigger_level: float = 0):
         """
         Configures the measurement settings for a specified channel.
         

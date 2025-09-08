@@ -58,7 +58,7 @@ class HP53131ALibrary(BaseLibrary):
 
     # --- Configuration ---
 
-    def configure_channel(self, channel: int, coupling: str = 'DC',
+    def configure_channel(self, channel: int, coupling: str = 'AC',
                           slope: str = 'POS', attenuation: int = 1,
                           trigger_level: float = 0):
         """
