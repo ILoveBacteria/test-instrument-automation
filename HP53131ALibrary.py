@@ -92,7 +92,7 @@ class HP53131ALibrary(BaseLibrary):
     @measure('frequency', 'Hz')
     def measure_frequency_gated(self, gate_time: float, channel: int = 1):
         """Configures gated frequency measurement."""
-        self.device.measure_frequency_gated(gate_time, channel)
+        self.device.measure_frequency_gated(channel, gate_time)
 
     @measure('period', 's')
     def measure_period(self, channel: int, expected_value: str = 'DEF', resolution: str = 'DEF'):
