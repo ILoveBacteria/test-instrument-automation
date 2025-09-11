@@ -286,7 +286,7 @@ class HP53131A(SCPIMixin, Instrument):
         """
         self.write(f':INIT:CONT {int(enabled)}')
     
-    def measurement_configuration(self, channel: int, coupling: str = 'DC', slope: str = 'POS', attenuation_x: int = 1, trigger_level: float = 0):
+    def measurement_configuration(self, channel: int, coupling: str = 'AC', slope: str = 'POS', attenuation_x: int = 1, trigger_level: float = 0):
         """
         Configures the measurement settings for a specified channel.
         
@@ -316,20 +316,22 @@ class HP53131A(SCPIMixin, Instrument):
         conf_cmd = f":CONF:FREQ {expected_value},{resolution},(@{channel})"
         self.write(conf_cmd)
 
-    def measure_frequency_gated(self, gate_time: float, channel: int = 1):
+    def measure_frequency_gated(self, channel: int, gate_time: float):
         """
         Measures frequency using a specified gate time.
 
         Args:
-            gate_time (float): The measurement gate time in seconds.
-            channel (int): The input channel (1, 2, or 3).
+            channel (int): The input channel (1, 2).
+            gate_time (float): The measurement gate time in seconds. Value between 1e-3 and 1000.
         
         SCPI Commands:
             :FUNCtion 'FREQ <channel>'
-            :FREQuency:ARM:STOP:SOURce TIMer
-            :FREQuency:ARM:STOP:TIMer <gate_time>
+            :FREQuency:ARM:STARt:SOURce IMMediate|EXTernal: Sets or queries the start arm for Frequency, Frequency Ratio, and Period measurements
+            :FREQuency:ARM:STOP:SOURce IMMediate|EXTernal|TIMer|DiGits: Sets or queries the stop arm for Frequency, Frequency Ratio, and Period measurements
+            :FREQuency:ARM:STOP:TIMer <gate_time>: Sets or queries the gate time used in arming Frequency, Frequency Ratio, and Period measurements.
         """
-        self.write(f":FUNC 'FREQ {channel}'")
+        self.verify_gate_time(gate_time)
+        self.write(f":CONF:FREQ DEF,DEF,(@{channel})")
         self.write(":FREQ:ARM:STAR:SOUR IMM")
         self.write(":FREQ:ARM:STOP:SOUR TIM")
         self.write(f":FREQ:ARM:STOP:TIM {gate_time}")
@@ -409,3 +411,41 @@ class HP53131A(SCPIMixin, Instrument):
         """
         conf_cmd = f":CONF:TOT:TIM {gate_time}"
         self.write(conf_cmd)
+        
+    # --- Validation functions ---
+    
+    def verify_gate_time(self, gate_time: float) -> None:
+        """
+        Verifies gate_time according to the instrument's
+        range and resolution. Raises ValueError if invalid.
+        """
+
+        # Short gate time specs
+        short_min, short_max = 1e-3, 99.99e-3     # 0.001 to 0.09999 s
+        short_res = 0.01e-3                       # 0.00001 s
+
+        # Long gate time specs
+        long_min, long_max = 100e-3, 1000.0       # 0.1 to 1000 s
+        long_res = 1e-3                           # 0.001 s
+
+        # Check short gate time range
+        if short_min <= gate_time <= short_max:
+            if abs((gate_time - short_min) % short_res) < 1e-12:
+                return
+            raise ValueError(
+                f"Invalid resolution: {gate_time} s is not a multiple of {short_res} s (short gate time)."
+            )
+
+        # Check long gate time range
+        elif long_min <= gate_time <= long_max:
+            if abs((gate_time - long_min) % long_res) < 1e-12:
+                return
+            raise ValueError(
+                f"Invalid resolution: {gate_time} s is not a multiple of {long_res} s (long gate time)."
+            )
+
+        # Out of range
+        raise ValueError(
+            f"Invalid gate_time: {gate_time} s (must be {short_min}-{short_max} s for short gate "
+            f"or {long_min}-{long_max} s for long gate)."
+        )

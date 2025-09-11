@@ -5,6 +5,8 @@ import functools
 
 class BaseLibrary:
     NAME: str = 'unknown_device'
+    CHANNELS = None
+    FIELDS = None
     
     def __init__(self):
         self.measure_type_status = 'unknown'
@@ -26,10 +28,10 @@ class BaseLibrary:
         return {
             'type': 'data', 
             'owner': self.NAME, 
-            'data': result, 
-            'measure_type_status': self.measure_type_status,
-            'measure_unit_status': self.measure_unit_status,
-            }
+            'data': [
+                [{'value': result, 'value_type': self.measure_type_status, 'value_unit': self.measure_unit_status}],    
+            ], 
+        }
     
     def open_connection(self, resource, **kwargs):
         raise NotImplementedError("This method should be implemented by subclasses.")
@@ -43,8 +45,41 @@ def publish_result(func):
     def wrapper(self: BaseLibrary, *args, **kwargs):
         result = func(self, *args, **kwargs)
         # publish to Redis
-        if self._r:
+        if self.connected:
             self.publish(self.publish_format(result))
+        return result
+    return wrapper
+
+
+def publish_status(func):
+    @functools.wraps(func)
+    def wrapper(self: BaseLibrary, *args, **kwargs):
+        result = func(self, *args, **kwargs)
+        status = [[] for _ in range(self.CHANNELS)]
+        for ch in range(self.CHANNELS):
+            channel_obj = getattr(self.device, f'ch{ch+1}')
+            status[ch].append({
+                'value': channel_obj.frequency,
+                'value_type': 'frequency',
+                'value_unit': 'Hz'
+            })
+            status[ch].append({
+                'value': channel_obj.amplitude,
+                'value_type': 'amplitude',
+                'value_unit': 'Vpp'
+            })
+            status[ch].append({
+                'value': channel_obj.shape,
+                'value_type': 'shape',
+                'value_unit': '-'
+            })
+
+        if self.connected:
+            self.publish({
+                'type': 'data',
+                'owner': self.NAME,
+                'data': status
+            })
         return result
     return wrapper
 
