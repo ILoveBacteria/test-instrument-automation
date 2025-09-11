@@ -35,6 +35,14 @@ devices:
         r: "{RANDOM(1000, 100000, 1):.2f}"
       - q: "SOURce2:FREQuency?"
         r: "{RANDOM(1000, 100000, 1):.2f}"
+      - q: "SOURce1:AMPlitude?"
+        r: "{RANDOM(0, 5, 1):.2f}"
+      - q: "SOURce2:AMPlitude?"
+        r: "{RANDOM(0, 5, 1):.2f}"
+      - q: "SOURce1:FUNCtion?"
+        r: "SIN"
+      - q: "SOURce2:FUNCtion?"
+        r: "SQU"
 
 resources:
   GPIB0::2::INSTR:
