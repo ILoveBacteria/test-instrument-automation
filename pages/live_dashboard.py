@@ -189,7 +189,7 @@ def render_dashboard_view():
                         for i, channel in enumerate(channels):
                             # Only show channel number if there's more than one
                             if len(channels) > 1:
-                                st.markdown(f"**Channel {i + 1}**")
+                                st.text(f"Channel {i + 1}")
                             
                             if not channel:
                                 st.text("No measurements for this channel.")
@@ -203,7 +203,8 @@ def render_dashboard_view():
                                 col = metric_cols[j] if num_measurements > 1 else st
                                 metric_label = (measurement.get('value_type') or 'Measurement').title()
                                 metric_value = f"{measurement.get('value', 'N/A')} {measurement.get('value_unit', '')}".strip()
-                                col.metric(metric_label, metric_value)
+                                col.caption(metric_label)
+                                col.text(metric_value)
         
         with right_sidebar:
             log_placeholder.markdown("\n\n".join(st.session_state.execution_log[::-1]), unsafe_allow_html=True)
@@ -246,4 +247,3 @@ if st.session_state.view == 'explorer':
     render_explorer_view()
 else:
     render_dashboard_view()
-
