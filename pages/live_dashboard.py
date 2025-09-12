@@ -35,6 +35,8 @@ if 'redis_client' not in st.session_state:
     st.session_state.redis_client = None
 if 'pubsub' not in st.session_state:
     st.session_state.pubsub = None
+if 'progress' not in st.session_state:
+    st.session_state.progress = 0.0
 
 # --- Helper Functions ---
 
@@ -188,6 +190,8 @@ def render_dashboard_view():
 
     with right_sidebar:
         st.header("Test Execution Log")
+        # progress bar
+        progress_bar = st.progress(0)
         log_placeholder = st.empty()
 
     # --- Main Loop ---
@@ -228,6 +232,7 @@ def render_dashboard_view():
                                 col.text(metric_value)
         
         with right_sidebar:
+            progress_bar.progress(st.session_state.progress)
             log_placeholder.markdown("\n\n".join(st.session_state.execution_log[::-1]), unsafe_allow_html=True)
 
         # Process new message from Redis
@@ -259,6 +264,7 @@ def render_dashboard_view():
                             st.session_state.device_data[device_name]['status'] = 'ERROR'
                 log_entry = format_log_message(msg_data)
                 st.session_state.execution_log.append(log_entry)
+                st.session_state.progress = msg_data.get('progress', 0)
         
         time.sleep(0.1)
 
