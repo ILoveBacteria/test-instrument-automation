@@ -69,6 +69,9 @@ def format_log_message(msg):
 def render_test_suite_overview(file_path):
     """Parse a Robot Framework file and render its test cases and keywords as expandable cards."""
     suite = MyTestSuite.from_file(str(file_path))
+    if suite.libraries:
+        libs = ', '.join(suite.libraries)
+        st.markdown(f"**Libraries Used:** {libs}")
     for tc in suite.testcases:
         with st.expander(f"Test Case: {tc.name} (Line {tc.lineno})", expanded=False):
             if tc.documentation:
