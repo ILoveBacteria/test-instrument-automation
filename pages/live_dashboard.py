@@ -122,7 +122,11 @@ def render_explorer_view():
         if st.button(f"▶️ Run Test: {st.session_state.selected_file.name}", type="primary"):
             try:
                 # 1. Start the robot process
-                command = ["robot", str(st.session_state.selected_file)]
+                command = [
+                    "robot",
+                    "--listener", "RobotRedisListener.py",
+                    str(st.session_state.selected_file)
+                ]
                 st.session_state.test_process = subprocess.Popen(command)
                 st.toast(f"Started process for: {st.session_state.selected_file.name}")
 
