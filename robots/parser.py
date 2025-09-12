@@ -1,8 +1,8 @@
 from robot.api import get_model
-from robot.parsing.model.blocks import TestCaseSection, SettingSection
+from robot.parsing.model.blocks import TestCaseSection, SettingSection, TestCase
 
 
-class Keyword:
+class MyKeyword:
     def __init__(self, name: str, lineno: int):
         self.name = name
         self.lineno = lineno
@@ -14,11 +14,11 @@ class Keyword:
         }
 
 
-class TestCase:
+class MyTestCase:
     def __init__(self, name: str, lineno: int):
         self.name = name
         self.lineno = lineno
-        self.keywords: list[Keyword] = []
+        self.keywords: list[MyKeyword] = []
         self.documentation: str = None
 
     def to_dict(self):
@@ -30,11 +30,11 @@ class TestCase:
         }
 
 
-class TestSuite:
+class MyTestSuite:
     def __init__(self, name: str):
         self.name = name
         self.libraries: list[str] = []
-        self.testcases: list[TestCase] = []
+        self.testcases: list[MyTestCase] = []
 
     def to_dict(self):
         return {
@@ -58,11 +58,13 @@ class TestSuite:
             # Collect test cases + their keywords
             elif isinstance(section, TestCaseSection):
                 for test in section.body:
-                    tc = TestCase(test.name, test.lineno)
+                    if not isinstance(test, TestCase):
+                        continue
+                    tc = MyTestCase(test.name, test.lineno)
                     for step in test.body:
                         if step.type == 'KEYWORD':
                             tc.keywords.append(
-                                Keyword(step.keyword, step.lineno)
+                                MyKeyword(step.keyword, step.lineno)
                             )
                         elif step.type == 'DOCUMENTATION':
                             tc.documentation = step.value

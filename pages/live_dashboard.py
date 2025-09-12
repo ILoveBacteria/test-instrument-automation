@@ -6,6 +6,9 @@ import os
 from pathlib import Path
 import subprocess
 
+from robots.parser import MyTestSuite
+
+
 # --- Page Configuration ---
 st.set_page_config(layout='wide', page_title='Test Runner & Dashboard')
 
@@ -62,6 +65,19 @@ def format_log_message(msg):
     elif status == 'FAIL':
         return f"{log_string} - **:red[{status}]**"
     return log_string
+
+def render_test_suite_overview(file_path):
+    """Parse a Robot Framework file and render its test cases and keywords as expandable cards."""
+    suite = MyTestSuite.from_file(str(file_path))
+    for tc in suite.testcases:
+        with st.expander(f"Test Case: {tc.name} (Line {tc.lineno})", expanded=False):
+            if tc.documentation:
+                st.markdown(f"**Documentation:** {tc.documentation}")
+            if not tc.keywords:
+                st.info("No keywords found.")
+            else:
+                for kw in tc.keywords:
+                    st.markdown(f"- **{kw.name}** (Line {kw.lineno})")
 
 # --- UI Rendering Functions ---
 
@@ -127,6 +143,8 @@ def render_explorer_view():
         try:
             content = st.session_state.selected_file.read_text(encoding='utf-8')
             st.code(content, language='robotframework', line_numbers=True)
+            # Render parsed test suite overview below code
+            render_test_suite_overview(st.session_state.selected_file)
         except Exception as e:
             st.error(f"Error reading file: {e}")
     else:
