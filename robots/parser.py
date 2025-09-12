@@ -1,6 +1,6 @@
 from robot.api import get_model
 from robot.parsing.model.blocks import TestCaseSection, SettingSection, TestCase
-from robot.parsing.model.statements import KeywordCall, Documentation
+from robot.parsing.model.statements import KeywordCall, Documentation, LibraryImport
 
 
 class MyKeyword:
@@ -53,7 +53,7 @@ class MyTestSuite:
             # Collect libraries
             if isinstance(section, SettingSection):
                 for lib in section.body:
-                    if lib.type == 'LIBRARY':
+                    if isinstance(lib, LibraryImport):
                         suite.libraries.append(lib.name)
 
             # Collect test cases + their keywords
