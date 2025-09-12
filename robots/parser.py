@@ -1,5 +1,6 @@
 from robot.api import get_model
 from robot.parsing.model.blocks import TestCaseSection, SettingSection, TestCase
+from robot.parsing.model.statements import KeywordCall, Documentation
 
 
 class MyKeyword:
@@ -62,11 +63,11 @@ class MyTestSuite:
                         continue
                     tc = MyTestCase(test.name, test.lineno)
                     for step in test.body:
-                        if step.type == 'KEYWORD':
+                        if isinstance(step, KeywordCall):
                             tc.keywords.append(
                                 MyKeyword(step.keyword, step.lineno)
                             )
-                        elif step.type == 'DOCUMENTATION':
+                        elif isinstance(step, Documentation):
                             tc.documentation = step.value
                     suite.testcases.append(tc)
 
