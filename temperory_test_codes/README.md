@@ -1,0 +1,5 @@
+# What is this?
+
+During **Research and Development** of a Test Instrument Automation Framework, I wrote some temporary test codes to try out various functionalities and features. These codes are not part of the main framework but were created to experiment with different ideas and implementations. They may include scripts, snippets, or small programs that helped me understand how certain components work or how to integrate them into the larger framework. These temporary test codes are essential for the development process as they allow me to validate concepts before incorporating them into the main project.
+
+- `scenario.yaml`: At the beginning of the project, My first idea to implement a test scenario parser was to use YAML files. But at last I decided to use *Robot Framework* test cases as the test scenario files. So this file is no longer used in the project.
