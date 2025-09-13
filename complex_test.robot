@@ -1,8 +1,7 @@
 *** Settings ***
-Library    HP3458ALibrary.py
-Library    HP53131ALibrary.py
-Library    AFG2225Library.py
-Library    Collections
+Library    HP3458ALibrary.py    AS    Multimeter
+Library    HP53131ALibrary.py    AS    Counter
+Library    AFG2225Library.py    AS    Function
 
 # Suite Setup    Connect Instruments
 # Suite Teardown    Disconnect Instruments
@@ -18,15 +17,15 @@ ${TEST_OFFSET}     0.0
 
 *** Keywords ***
 Connect Instruments
-    AFG2225Library.Open Connection    ${AFG2225_ADDR}
-    HP3458ALibrary.Open Connection    ${HP3458_ADDR}    visa_library=192.168.1.102:5000@proxy
-    HP53131ALibrary.Open Connection    ${HP53131_ADDR}    visa_library=192.168.1.102:5000@proxy
+    Function.Open Connection    ${AFG2225_ADDR}
+    Multimeter.Open Connection    ${HP3458_ADDR}    visa_library=192.168.1.102:5000@proxy
+    Counter.Open Connection    ${HP53131_ADDR}    visa_library=192.168.1.102:5000@proxy
     Log    Instruments connected successfully
 
 Disconnect Instruments
-    AFG2225Library.Close Connection
-    HP3458ALibrary.Close Connection
-    HP53131ALibrary.Close Connection
+    Function.Close Connection
+    Multimeter.Close Connection
+    Counter.Close Connection
     Log    Instruments disconnected successfully
 
 Configure Function Generator
