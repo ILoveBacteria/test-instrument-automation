@@ -20,6 +20,10 @@ class AFG2225Library(BaseLibrary):
         super().__init__()
         self.device = None
 
+    def get_id(self) -> str:
+        """Returns the device identification string."""
+        return self.device.id
+
     # ------------------ CONNECTION ------------------
     def open_connection(self, resource, **kwargs):
         """
