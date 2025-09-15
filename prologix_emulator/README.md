@@ -1,3 +1,7 @@
+# Prologix Emulator
+
+This directory contains an emulator for the Prologix GPIB-USB controller. The emulator is designed to simulate the behavior of a Prologix device, enabling developers to test and debug GPIB-based instrument communication without requiring physical hardware. It is particularly useful for validating software implementations in environments where access to actual instruments is limited.
+
 ### How This Server Works
 
 1.  **Socket Server**: It opens a TCP socket on port `1234` and listens for incoming connections. For each client that connects, it spins up a new `ClientHandler` thread. This allows multiple clients to connect simultaneously (though they will be controlling the same GPIB bus).
