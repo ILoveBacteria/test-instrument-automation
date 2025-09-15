@@ -7,6 +7,7 @@ class BaseLibrary:
     NAME: str = 'unknown_device'
     CHANNELS = None
     FIELDS = None
+    PRIORITY = 1
     
     def __init__(self):
         self.measure_type_status = 'unknown'
@@ -21,6 +22,7 @@ class BaseLibrary:
         self.publish(self.publish_format(0.0))
 
     def publish(self, event: dict):
+        event['priority'] = self.PRIORITY
         if self.connected:
             self._r.publish('robot_events', json.dumps(event))
         

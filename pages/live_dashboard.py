@@ -174,15 +174,32 @@ def render_dashboard_view():
         st.rerun()
 
     # --- Main Page Layout ---
+    # Priority window selector
+    all_priorities = sorted(set(
+        device.get('priority', 0)
+        for device in st.session_state.device_data.values()
+    ))
+    if 'selected_priority' not in st.session_state:
+        st.session_state.selected_priority = all_priorities[0] if all_priorities else 0
+    # Render priority buttons inline
+    for prio in all_priorities:
+        if st.button(f'Window {prio}', key=f'window_{prio}'):
+            st.session_state.selected_priority = prio
+
     main_area, right_sidebar = st.columns([3, 1])
 
     with main_area:
-        st.header("Device Status")
-        if not st.session_state.device_data:
-            st.info("Waiting for first measurement data from test run...")
+        st.header(f"Device Status (Window {st.session_state.selected_priority})")
+        # Only show devices with selected priority
+        filtered_devices = {
+            k: v for k, v in st.session_state.device_data.items()
+            if v.get('priority', 0) == st.session_state.selected_priority
+        }
+        if not filtered_devices:
+            st.info("No devices in this window.")
 
         COLS_PER_ROW = 3
-        device_names = sorted(list(st.session_state.device_data.keys()))
+        device_names = sorted(list(filtered_devices.keys()))
         placeholders = {}
         device_chunks = [device_names[i:i + COLS_PER_ROW] for i in range(0, len(device_names), COLS_PER_ROW)]
 
@@ -247,14 +264,14 @@ def render_dashboard_view():
 
             if msg_type == 'data':
                 owner = msg_data.get('owner')
+                priority = msg_data.get('priority', 0)
                 if owner and owner not in st.session_state.device_data:
                     # Initialize new device with the correct structure
-                    st.session_state.device_data[owner] = {'status': 'OK', 'channels': []}
+                    st.session_state.device_data[owner] = {'status': 'OK', 'channels': [], 'priority': priority}
                     st.rerun()
-                
                 if owner in st.session_state.device_data:
-                    # Store the entire list of channels and their measurements
                     st.session_state.device_data[owner]['channels'] = msg_data.get('data', [])
+                    st.session_state.device_data[owner]['priority'] = priority
 
             elif msg_type in ['suite', 'keyword']:
                 if msg_type == 'suite' and msg_data.get('action') == 'start':
