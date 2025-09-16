@@ -21,19 +21,16 @@ class BaseLibrary:
             print(f"Could not connect to Redis")
         self.publish(self.publish_format(0.0))
 
-    def publish(self, event: dict):
-        event['priority'] = self.PRIORITY
+    def publish(self, channels: list):
+        event = {'type': 'data', 'priority': self.PRIORITY, 'status': 'OK', 'owner': self.NAME}
+        event['data'] = channels
         if self.connected:
             self._r.publish('robot_events', json.dumps(event))
         
-    def publish_format(self, result: float) -> dict:
-        return {
-            'type': 'data', 
-            'owner': self.NAME, 
-            'data': [
+    def publish_format(self, result: float) -> list:
+        return  [
                 [{'value': result, 'value_type': self.measure_type_status, 'value_unit': self.measure_unit_status}],    
-            ], 
-        }
+            ]
     
     def open_connection(self, resource, **kwargs):
         raise NotImplementedError("This method should be implemented by subclasses.")
@@ -77,11 +74,7 @@ def publish_status(func):
             })
 
         if self.connected:
-            self.publish({
-                'type': 'data',
-                'owner': self.NAME,
-                'data': status
-            })
+            self.publish(status)
         return result
     return wrapper
 
