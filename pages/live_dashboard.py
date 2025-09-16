@@ -161,35 +161,25 @@ def render_explorer_view():
         
         
 def process_new_redis_message():
-    message = st.session_state.pubsub.get_message(ignore_subscribe_messages=True, timeout=10)
-    if message:
-        msg_data = json.loads(message['data'])
-        msg_type = msg_data.get('type')
+    message = st.session_state.pubsub.get_message(ignore_subscribe_messages=True, timeout=60)
+    if not message:
+        return
+    msg_data = json.loads(message['data'])
+    msg_type = msg_data.get('type')
 
-        if msg_type == 'data':
-            owner = msg_data.get('owner')
-            priority = msg_data.get('priority', 0)
-            if owner and owner not in st.session_state.device_data:
-                # Initialize new device with the correct structure
-                st.session_state.device_data[owner] = {'status': 'OK', 'channels': [], 'priority': priority}
-                st.rerun()
-            if owner in st.session_state.device_data:
-                st.session_state.device_data[owner]['channels'] = msg_data.get('data', [])
-                st.session_state.device_data[owner]['priority'] = priority
+    if msg_type == 'data':
+        owner = msg_data.get('owner')
+        if not owner:
+            return
+        st.session_state.device_data[owner] = msg_data
+        st.rerun()
 
-        elif msg_type in ['suite', 'keyword']:
-            if msg_type == 'suite' and msg_data.get('action') == 'start':
-                st.session_state.execution_log = ["--- Listening for new test runs ---"]
-                for device in st.session_state.device_data.values():
-                    device['status'] = 'OK'
-            if msg_data.get('status') == 'FAIL':
-                name = msg_data.get('name', '').upper()
-                for device_name in st.session_state.device_data:
-                    if device_name.upper() in name:
-                        st.session_state.device_data[device_name]['status'] = 'ERROR'
-            log_entry = format_log_message(msg_data)
-            st.session_state.execution_log.append(log_entry)
-            st.session_state.progress = msg_data.get('progress', 0)
+    elif msg_type in ['suite', 'keyword', 'test']:
+        if msg_type == 'suite' and msg_data.get('action') == 'start':
+            st.session_state.execution_log = ["--- Listening for new test runs ---"]
+        log_entry = format_log_message(msg_data)
+        st.session_state.execution_log.append(log_entry)
+        st.session_state.progress = msg_data.get('progress', 0)
 
 
 def render_dashboard_view():
@@ -260,7 +250,7 @@ def render_dashboard_view():
                     else:
                         st.success(f"**{device_name}**")
 
-                    channels = device_info.get('channels', [])
+                    channels = device_info.get('data', [])
                     if not channels:
                         st.text("No measurements received yet.")
                     else:
