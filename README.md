@@ -62,6 +62,10 @@ The system architecture is designed to be multi-layered and based on independent
 - A running Redis Server
 - A Raspberry Pi with Raspberry Pi OS to use the custom converter.
 
+The raspberry pi based GPIB converter running the PyVISA-proxy server. Implemented using [linux-gpib](https://github.com/coolshou/linux-gpib) and with the help of this [website](https://www.hackster.io/lightside-instruments/the-gpib4pi-gpib-for-raspberry-pi-shield-4b3e9a) instructions.
+
+Prebuilt binaries for the Raspberry Pi 3 (`armv7l` architecture) are available, making it easier to set up the framework without needing to compile from source. These binaries are compatible with systems running `Raspbian Bookworm 32bits` or similar distributions. Prebuilt binaries can be found in the [raspberry_pi_binaries](https://github.com/ILoveBacteria/test-instrument-automation/tree/master/raspberry_pi_binaries) directory of this repository.
+
 ### Installation & Setup
 
 Clone the repository:
@@ -136,8 +140,12 @@ Do **not** contribute yet, this project is still in early **development**.
 
 A web-based dashboard built with [Streamlit](https://streamlit.io/) for live control of instruments, test execution, and result visualization.
 
-### Screenshots
+## Images and Videos
+
+Streamlit GUI screenshots:
 
 ![Streamlit GUI Screenshot 1](https://github.com/ILoveBacteria/test-instrument-automation/blob/master/.github/assets/streamlit-gui-screenshot1.png)
 
 ![Streamlit GUI Screenshot 2](https://github.com/ILoveBacteria/test-instrument-automation/blob/master/.github/assets/streamlit-gui-screenshot2.png)
+
+![Raspberry Pi GPIB Converter](https://github.com/ILoveBacteria/test-instrument-automation/blob/master/.github/assets/raspberry_pi_gpib_converter.jpg)
