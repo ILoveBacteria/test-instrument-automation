@@ -158,6 +158,28 @@ def render_explorer_view():
             st.error(f"Error reading file: {e}")
     else:
         st.info("Select a file from the sidebar to view its content and run the test.")
+        
+        
+def process_new_redis_message():
+    message = st.session_state.pubsub.get_message(ignore_subscribe_messages=True, timeout=60)
+    if not message:
+        return
+    msg_data = json.loads(message['data'])
+    msg_type = msg_data.get('type')
+
+    if msg_type == 'data':
+        owner = msg_data.get('owner')
+        if not owner:
+            return
+        st.session_state.device_data[owner] = msg_data
+        st.rerun()
+
+    elif msg_type in ['suite', 'keyword', 'test']:
+        if msg_type == 'suite' and msg_data.get('action') == 'start':
+            st.session_state.execution_log = ["--- Listening for new test runs ---"]
+        log_entry = format_log_message(msg_data)
+        st.session_state.execution_log.append(log_entry)
+        st.session_state.progress = msg_data.get('progress', 0)
 
 
 def render_dashboard_view():
@@ -174,15 +196,32 @@ def render_dashboard_view():
         st.rerun()
 
     # --- Main Page Layout ---
+    # Priority window selector
+    all_priorities = sorted(set(
+        device.get('priority', 0)
+        for device in st.session_state.device_data.values()
+    ))
+    if 'selected_priority' not in st.session_state:
+        st.session_state.selected_priority = all_priorities[0] if all_priorities else 0
+    # Render priority buttons inline
+    for prio in all_priorities:
+        if st.button(f'Window {prio}', key=f'window_{prio}'):
+            st.session_state.selected_priority = prio
+
     main_area, right_sidebar = st.columns([3, 1])
 
     with main_area:
-        st.header("Device Status")
-        if not st.session_state.device_data:
-            st.info("Waiting for first measurement data from test run...")
+        st.header(f"Device Status (Window {st.session_state.selected_priority})")
+        # Only show devices with selected priority
+        filtered_devices = {
+            k: v for k, v in st.session_state.device_data.items()
+            if v.get('priority', 0) == st.session_state.selected_priority
+        }
+        if not filtered_devices:
+            st.info("No devices in this window.")
 
         COLS_PER_ROW = 3
-        device_names = sorted(list(st.session_state.device_data.keys()))
+        device_names = sorted(list(filtered_devices.keys()))
         placeholders = {}
         device_chunks = [device_names[i:i + COLS_PER_ROW] for i in range(0, len(device_names), COLS_PER_ROW)]
 
@@ -211,7 +250,7 @@ def render_dashboard_view():
                     else:
                         st.success(f"**{device_name}**")
 
-                    channels = device_info.get('channels', [])
+                    channels = device_info.get('data', [])
                     if not channels:
                         st.text("No measurements received yet.")
                     else:
@@ -240,37 +279,7 @@ def render_dashboard_view():
             log_placeholder.markdown("\n\n".join(st.session_state.execution_log[::-1]), unsafe_allow_html=True)
 
         # Process new message from Redis
-        message = st.session_state.pubsub.get_message(ignore_subscribe_messages=True, timeout=0.1)
-        if message:
-            msg_data = json.loads(message['data'])
-            msg_type = msg_data.get('type')
-
-            if msg_type == 'data':
-                owner = msg_data.get('owner')
-                if owner and owner not in st.session_state.device_data:
-                    # Initialize new device with the correct structure
-                    st.session_state.device_data[owner] = {'status': 'OK', 'channels': []}
-                    st.rerun()
-                
-                if owner in st.session_state.device_data:
-                    # Store the entire list of channels and their measurements
-                    st.session_state.device_data[owner]['channels'] = msg_data.get('data', [])
-
-            elif msg_type in ['suite', 'keyword']:
-                if msg_type == 'suite' and msg_data.get('action') == 'start':
-                    st.session_state.execution_log = ["--- Listening for new test runs ---"]
-                    for device in st.session_state.device_data.values():
-                        device['status'] = 'OK'
-                if msg_data.get('status') == 'FAIL':
-                    name = msg_data.get('name', '').upper()
-                    for device_name in st.session_state.device_data:
-                        if device_name.upper() in name:
-                            st.session_state.device_data[device_name]['status'] = 'ERROR'
-                log_entry = format_log_message(msg_data)
-                st.session_state.execution_log.append(log_entry)
-                st.session_state.progress = msg_data.get('progress', 0)
-        
-        time.sleep(0.1)
+        process_new_redis_message()
 
 
 # --- Main Controller ---
