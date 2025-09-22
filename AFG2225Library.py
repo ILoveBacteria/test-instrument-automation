@@ -25,12 +25,13 @@ class AFG2225Library(BaseLibrary):
         return self.device.id
 
     # ------------------ CONNECTION ------------------
-    def open_connection(self, resource, **kwargs):
+    def open_connection(self, address, **kwargs):
         """
         Opens connection to the AFG2225.
         Example:
         | Open Connection | ASRL5::INSTR |
         """
+        resource = f'ASRL{address}::INSTR'
         self.device = AFG2225(resource, **kwargs)
         logger.info(f"Connected to AFG2225 at {resource}")
         self.device.setup()

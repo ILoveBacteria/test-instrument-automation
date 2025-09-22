@@ -32,7 +32,7 @@ class BaseLibrary:
                 [{'value': result, 'value_type': self.measure_type_status, 'value_unit': self.measure_unit_status}],    
             ]
     
-    def open_connection(self, resource, **kwargs):
+    def open_connection(self, address: int, **kwargs):
         raise NotImplementedError("This method should be implemented by subclasses.")
     
     def close_connection(self):

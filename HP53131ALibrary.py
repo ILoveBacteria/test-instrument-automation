@@ -19,12 +19,13 @@ class HP53131ALibrary(BaseLibrary):
         self.device = None
 
     # ------------------ CONNECTION ------------------
-    def open_connection(self, resource, **kwargs):
+    def open_connection(self, address, **kwargs):
         """
         Opens connection to the HP53131A.
         Example:
         | Open Connection | GPIB0::3::INSTR |
         """
+        resource = f'GPIB0::{address}::INSTR'
         self.device = HP53131A(resource, **kwargs)
         logger.info(f"Connected to HP53131A at {resource}")
         self.device.setup()
