@@ -2,7 +2,10 @@ import redis
 import json
 import functools
 
+from robot.api.deco import library
 
+
+@library(scope='GLOBAL', auto_keywords=True)
 class BaseLibrary:
     NAME: str = 'unknown_device'
     CHANNELS = None
@@ -19,15 +22,15 @@ class BaseLibrary:
             self.connected = True
         except redis.ConnectionError:
             print(f"Could not connect to Redis")
-        self.publish(self.publish_format(0.0))
+        self._publish(self._publish_format(0.0))
 
-    def publish(self, channels: list):
+    def _publish(self, channels: list):
         event = {'type': 'data', 'priority': self.PRIORITY, 'status': 'OK', 'owner': self.NAME}
         event['data'] = channels
         if self.connected:
             self._r.publish('robot_events', json.dumps(event))
         
-    def publish_format(self, result: float) -> list:
+    def _publish_format(self, result: float) -> list:
         return  [
                 [{'value': result, 'value_type': self.measure_type_status, 'value_unit': self.measure_unit_status}],    
             ]
@@ -45,7 +48,7 @@ def publish_result(func):
         result = func(self, *args, **kwargs)
         # publish to Redis
         if self.connected:
-            self.publish(self.publish_format(result))
+            self._publish(self._publish_format(result))
         return result
     return wrapper
 
@@ -74,7 +77,7 @@ def publish_status(func):
             })
 
         if self.connected:
-            self.publish(status)
+            self._publish(status)
         return result
     return wrapper
 
