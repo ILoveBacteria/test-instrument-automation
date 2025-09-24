@@ -1,0 +1,9 @@
+services:
+  gui:
+    build:
+      context: ./gui
+    ports:
+      - "localhost:8501:8501"
+    volumes:
+      - ./gui:/app
+    container_name: streamlit-gui
