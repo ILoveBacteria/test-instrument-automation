@@ -3,7 +3,21 @@ services:
     build:
       context: ./gui
     ports:
-      - "localhost:8501:8501"
+      - "127.0.0.1:8501:8501"
     volumes:
       - ./gui:/app
     container_name: streamlit-gui
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  redis:
+    image: "docker.arvancloud.ir/redis:latest"
+    ports:
+      - "6379:6379"
+    container_name: redis-server
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
