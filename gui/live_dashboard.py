@@ -1,10 +1,9 @@
+import json
+import os
+
 import streamlit as st
 import redis
-import json
-import time
-import os
-from pathlib import Path
-import subprocess
+import requests
 
 # from robots.parser import MyTestSuite
 
@@ -66,7 +65,39 @@ def render_test_suite_overview(file_path):
                 for kw in tc.keywords:
                     st.markdown(f"- **{kw.name}** (Line {kw.lineno})")
 
+def start_robot_test_api(file_obj):
+    """Send the selected .robot file to the API server via POST request."""
+    api_url = os.environ.get('ROBOT_API_URL', 'http://localhost')
+    api_port = os.environ.get('ROBOT_API_PORT', '5000')
+    url = f"{api_url}:{api_port}/run-test"
+    files = {'robot_file': (file_obj.name, file_obj, 'text/plain')}
+    try:
+        response = requests.post(url, files=files)
+        if response.status_code == 200:
+            st.toast("Test started via API server.")
+            return True, response.json()
+        else:
+            error_msg = response.json().get('error', 'Unknown error')
+            st.error(f"API Error: {error_msg}")
+            return False, response.json()
+    except Exception as e:
+        st.error(f"Failed to contact API server: {e}")
+        return False, {'error': str(e)}
+
 # --- UI Rendering Functions ---
+
+def connect_to_redis():
+    """Establishes a connection to Redis and sets up pub/sub."""
+    try:
+        r = redis.Redis(host='localhost', port=6379, decode_responses=True)
+        r.ping()
+        st.session_state.redis_client = r
+        st.session_state.pubsub = st.session_state.redis_client.pubsub()
+        st.session_state.pubsub.subscribe('robot_events')
+        return True
+    except redis.exceptions.ConnectionError as e:
+        st.error(f"Could not connect to Redis. Is it running? Error: {e}")
+        return False
 
 def render_explorer_view():
     """Renders the UI for selecting and running Robot Framework files."""
@@ -96,35 +127,11 @@ def render_explorer_view():
     if st.session_state.selected_file:
         st.subheader(f"Viewing: `{st.session_state.selected_file.name}`")
         if st.button(f"▶️ Run Test: {st.session_state.selected_file.name}", type="primary"):
-            try:
-                # Save the uploaded file to a temp location
-                temp_path = os.path.join(".tmp", st.session_state.selected_file.name)
-                os.makedirs(".tmp", exist_ok=True)
-                with open(temp_path, "wb") as f:
-                    f.write(st.session_state.selected_file.getbuffer())
-                # Start the robot process
-                command = [
-                    "robot",
-                    "--listener", "RobotRedisListener.py",
-                    temp_path
-                ]
-                st.session_state.test_process = subprocess.Popen(command)
-                st.toast(f"Started process for: {st.session_state.selected_file.name}")
-
-                # Connect to Redis automatically
-                r = redis.Redis(host='localhost', port=6379, decode_responses=True)
-                r.ping()
-                st.session_state.redis_client = r
-                st.session_state.pubsub = st.session_state.redis_client.pubsub()
-                st.session_state.pubsub.subscribe('robot_events')
+            success, result = start_robot_test_api(st.session_state.selected_file)
+            if success:
+                connect_to_redis()
                 st.session_state.view = 'dashboard'
                 st.rerun()
-            except FileNotFoundError:
-                st.error("Error: 'robot' command not found. Is Robot Framework installed and in your system's PATH?")
-            except redis.exceptions.ConnectionError as e:
-                st.error(f"Could not connect to Redis to monitor the test. Is it running? Error: {e}")
-            except Exception as e:
-                st.error(f"An unexpected error occurred: {e}")
         # Display file content
         try:
             content = st.session_state.selected_file.read().decode('utf-8')
