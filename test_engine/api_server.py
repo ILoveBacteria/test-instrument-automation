@@ -6,7 +6,7 @@ from robot import run_cli
 app = Flask(__name__)
 
 def run_robot_test(filename):
-    run_cli(['--outputdir', 'results', filename], exit=False)
+    run_cli(['--outputdir', 'results', '--listener', 'RobotRedisListener.py', filename], exit=False)
 
 @app.route('/run-test', methods=['POST'])
 def run_test():
