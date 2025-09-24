@@ -89,7 +89,10 @@ def start_robot_test_api(file_obj):
 def connect_to_redis():
     """Establishes a connection to Redis and sets up pub/sub."""
     try:
-        r = redis.Redis(host='localhost', port=6379, decode_responses=True)
+        r = redis.Redis(host=os.environ.get('REDIS_HOST', 'localhost'), 
+                        port=os.environ.get('REDIS_PORT', 6379), 
+                        decode_responses=True
+                        )
         r.ping()
         st.session_state.redis_client = r
         st.session_state.pubsub = st.session_state.redis_client.pubsub()
