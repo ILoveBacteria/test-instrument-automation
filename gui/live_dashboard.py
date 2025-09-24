@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 import subprocess
 
-from robots.parser import MyTestSuite
+# from robots.parser import MyTestSuite
 
 
 # --- Page Configuration ---
@@ -17,10 +17,6 @@ if 'view' not in st.session_state:
     st.session_state.view = 'explorer'  # Can be 'explorer' or 'dashboard'
 
 # Explorer-specific state
-if 'folder_path' not in st.session_state:
-    st.session_state.folder_path = ''
-if 'robot_files' not in st.session_state:
-    st.session_state.robot_files = []
 if 'selected_file' not in st.session_state:
     st.session_state.selected_file = None
 if 'test_process' not in st.session_state:
@@ -40,21 +36,6 @@ if 'progress' not in st.session_state:
 
 # --- Helper Functions ---
 
-def find_robot_files(folder):
-    """Recursively finds all .robot files in a given folder."""
-    try:
-        path = Path(folder)
-        if not path.is_dir():
-            st.error(f'Error: "{folder}" is not a valid directory.')
-            return []
-        files = sorted(list(path.rglob('*.robot')))
-        if not files:
-            st.warning(f'No ".robot" files found in the specified directory.')
-        return files
-    except Exception as e:
-        st.error(f"An error occurred while scanning the folder: {e}")
-        return []
-
 def format_log_message(msg):
     """Formats a log message with a simpler text-based format."""
     action = msg.get('action', '')
@@ -70,6 +51,7 @@ def format_log_message(msg):
 
 def render_test_suite_overview(file_path):
     """Parse a Robot Framework file and render its test cases and keywords as expandable cards."""
+    return
     suite = MyTestSuite.from_file(str(file_path))
     if suite.libraries:
         libs = ', '.join(suite.libraries)
@@ -87,78 +69,72 @@ def render_test_suite_overview(file_path):
 # --- UI Rendering Functions ---
 
 def render_explorer_view():
-    """Renders the UI for finding and running Robot Framework files."""
+    """Renders the UI for selecting and running Robot Framework files."""
     st.title('🤖 Robot Test Runner')
-    st.write("Enter the absolute path to a folder containing your test suites to get started.")
+    st.write("Select one or more Robot Framework test files from disk to get started.")
 
-    folder_input = st.text_input(
-        "Test Suite Folder Path",
-        value=st.session_state.folder_path,
-        placeholder="e.g., C:/Users/YourUser/Documents/robot-tests"
+    uploaded_files = st.file_uploader(
+        "Choose Robot Framework file(s)",
+        type=["robot"],
+        accept_multiple_files=True
     )
 
-    if st.button("Scan Folder"):
-        st.session_state.folder_path = folder_input
-        st.session_state.robot_files = find_robot_files(folder_input)
-        st.session_state.selected_file = None
-
-    # --- Sidebar for File Navigation ---
+    # Sidebar for file navigation
     st.sidebar.header("Test Suites")
-    if not st.session_state.robot_files:
-        st.sidebar.info("Scan a folder to see test files.")
+    if not uploaded_files:
+        st.sidebar.info("Upload one or more .robot files to see test files.")
+        st.session_state.selected_file = None
     else:
-        file_display_names = [f.name for f in st.session_state.robot_files]
+        file_display_names = [f.name for f in uploaded_files]
         selected_display_name = st.sidebar.radio("Select a file to run:", options=file_display_names)
-        for f in st.session_state.robot_files:
+        for f in uploaded_files:
             if f.name == selected_display_name:
                 st.session_state.selected_file = f
                 break
 
-    # --- Main Area for File Content and Run Button ---
+    # Main Area for File Content and Run Button
     if st.session_state.selected_file:
-        st.subheader(f"Viewing: `{os.path.relpath(st.session_state.selected_file, st.session_state.folder_path)}`")
-        
-        # Run button is placed above the code view
+        st.subheader(f"Viewing: `{st.session_state.selected_file.name}`")
         if st.button(f"▶️ Run Test: {st.session_state.selected_file.name}", type="primary"):
             try:
-                # 1. Start the robot process
+                # Save the uploaded file to a temp location
+                temp_path = os.path.join(".tmp", st.session_state.selected_file.name)
+                os.makedirs(".tmp", exist_ok=True)
+                with open(temp_path, "wb") as f:
+                    f.write(st.session_state.selected_file.getbuffer())
+                # Start the robot process
                 command = [
                     "robot",
                     "--listener", "RobotRedisListener.py",
-                    str(st.session_state.selected_file)
+                    temp_path
                 ]
                 st.session_state.test_process = subprocess.Popen(command)
                 st.toast(f"Started process for: {st.session_state.selected_file.name}")
 
-                # 2. Connect to Redis automatically
+                # Connect to Redis automatically
                 r = redis.Redis(host='localhost', port=6379, decode_responses=True)
                 r.ping()
                 st.session_state.redis_client = r
                 st.session_state.pubsub = st.session_state.redis_client.pubsub()
                 st.session_state.pubsub.subscribe('robot_events')
-                
-                # 3. Switch to the dashboard view
                 st.session_state.view = 'dashboard'
                 st.rerun()
-
             except FileNotFoundError:
                 st.error("Error: 'robot' command not found. Is Robot Framework installed and in your system's PATH?")
             except redis.exceptions.ConnectionError as e:
-                 st.error(f"Could not connect to Redis to monitor the test. Is it running? Error: {e}")
+                st.error(f"Could not connect to Redis to monitor the test. Is it running? Error: {e}")
             except Exception as e:
                 st.error(f"An unexpected error occurred: {e}")
-
         # Display file content
         try:
-            content = st.session_state.selected_file.read_text(encoding='utf-8')
+            content = st.session_state.selected_file.read().decode('utf-8')
             st.code(content, language='robotframework', line_numbers=True)
-            # Render parsed test suite overview below code
-            render_test_suite_overview(st.session_state.selected_file)
+            # Optionally render parsed test suite overview
+            # render_test_suite_overview(st.session_state.selected_file)
         except Exception as e:
             st.error(f"Error reading file: {e}")
     else:
         st.info("Select a file from the sidebar to view its content and run the test.")
-        
         
 def process_new_redis_message():
     message = st.session_state.pubsub.get_message(ignore_subscribe_messages=True, timeout=60)
