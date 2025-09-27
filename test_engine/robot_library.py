@@ -1,3 +1,4 @@
+import os
 import redis
 import json
 import functools
@@ -16,7 +17,7 @@ class BaseLibrary:
         self.measure_type_status = 'unknown'
         self.measure_unit_status = 'unknown'
         self.connected = False
-        self._r = redis.Redis(host='localhost', port=6379, decode_responses=True)
+        self._r = redis.Redis(host=os.getenv('REDIS_HOST', 'localhost'), port=os.getenv('REDIS_PORT', 6379), decode_responses=True)
         try:
             self._r.ping()
             self.connected = True

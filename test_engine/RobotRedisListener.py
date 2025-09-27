@@ -1,4 +1,5 @@
 # https://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html#listener-version-3
+import os
 import json
 import redis
 
@@ -6,7 +7,7 @@ import redis
 class RobotRedisListener:
     ROBOT_LISTENER_API_VERSION = 3
     
-    def __init__(self, host='localhost', port=6379, channel='robot_events'):
+    def __init__(self, host=os.getenv('REDIS_HOST', 'localhost'), port=os.getenv('REDIS_PORT', 6379), channel='robot_events'):
         # uri passed by robot: e.g. --listener robot_event_listener.py:localhost:6379
         self.number_of_tests = None
         self.number_of_tests_run = 0
