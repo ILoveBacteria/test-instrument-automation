@@ -1,0 +1,10 @@
+__pycache__/
+.venv/
+.vscode/
+
+pyvisa/
+pyvisa-py/
+pyvisa-sim/
+
+# robot framework
+results/

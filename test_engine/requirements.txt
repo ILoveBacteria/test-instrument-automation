@@ -1,1 +1,8 @@
 flask~=3.1
+redis~=6.4
+robotframework~=7.3
+PyMeasure~=0.15.0
+PyVISA @ git+https://github.com/ILoveBacteria/pyvisa@2c5b4e0d306f8d773892f8ccce1da576e844a566
+PyVISA-py @ git+https://github.com/ILoveBacteria/pyvisa-py@62ca8e408910e9bf016a8af80d64ae1e4143abaa
+PyVISA-sim @ git+https://github.com/ILoveBacteria/pyvisa-sim.git@e79e054b255d47515423b484ab3ebd6311a1b382
+PyVISA-proxy==0.1.3

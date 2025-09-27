@@ -11,18 +11,29 @@ services:
       redis:
         condition: service_healthy
     environment:
-      - ROBOT_API_URL=http://host.docker.internal
+      - ROBOT_API_URL=http://test_engine
       - ROBOT_API_PORT=5000
       - REDIS_HOST=redis
       - REDIS_PORT=6379
 
   redis:
     image: "docker.arvancloud.ir/redis:latest"
-    ports:
-      - "6379:6379"
     container_name: redis-server
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 5
+
+  test_engine:
+    build:
+      context: ./test_engine
+    volumes:
+      - ./test_engine:/app
+    container_name: test-engine
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
