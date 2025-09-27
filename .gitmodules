@@ -1,0 +1,9 @@
+[submodule "test_engine/pyvisa"]
+	path = test_engine/pyvisa
+	url = https://github.com/ILoveBacteria/pyvisa
+[submodule "test_engine/pyvisa-py"]
+	path = test_engine/pyvisa-py
+	url = https://github.com/ILoveBacteria/pyvisa-py
+[submodule "test_engine/pyvisa-sim"]
+	path = test_engine/pyvisa-sim
+	url = https://github.com/ILoveBacteria/pyvisa-sim
