@@ -7,6 +7,12 @@ app = Flask(__name__)
 
 def run_robot_test(filename):
     run_cli(['--outputdir', 'results', '--listener', 'RobotRedisListener.py', filename], exit=False)
+    
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    return jsonify({'status': 'ok'}), 200
+
 
 @app.route('/run-test', methods=['POST'])
 def run_test():
