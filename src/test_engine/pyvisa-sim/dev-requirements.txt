@@ -1,0 +1,7 @@
+pyvisa
+ruff
+mypy
+types-PyYAML
+pytest
+sphinx
+sphinx-rtd-theme

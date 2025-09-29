@@ -1,0 +1,8 @@
+include *.rst *.txt *.toml
+
+recursive-include pyvisa-sim *
+recursive-include docs *
+
+prune docs/_build
+
+global-exclude *.pyc *~ .DS_Store *__pycache__* *.pyo

@@ -1,0 +1,24 @@
+*~
+__pycache__
+*egg-info*
+*.pyc
+.DS_Store
+docs/_build/
+.idea
+build/
+dist/
+MANIFEST
+.tox
+.eggs
+# WebDAV file system cache files
+.DAV/
+_test/
+.spyproject/
+.mypy_cache/
+.pytest_cache/
+.cache/
+.vscode
+.dmypy.json
+
+# auto-generated version file
+version.py

@@ -1,0 +1,227 @@
+PyVISA-py Changelog
+===================
+
+0.8.0 (01-04-2025)
+------------------
+
+- add support for USB and Ethernet Prologix adapters PR #484
+- improve message when USB device serial number is not readable PR #423
+- ignore network interface card with no subnet mask when discovering TCPIP
+  resources PR #478
+- add VICP INSTR to the supported interface for TCPIP keep alive attr PR #477
+- add read_stb method for TCPIP HiSLIP client PR #429
+- fix usbtmc implementation to respect section 3.3 of the spec PR #449
+  Read now reads from usb until a "short packet" or if all data (`transfer_size`) PR #465
+  has been read (see specification), and only expects a header on the first packet received.
+- fix usbtmc implementation to properly discard the alignment bytes
+  ensuring only the actual data (`transfer_size`) is retained in the message PR #465
+- Implemented partial USBTMC message functionality that allows reading the amount of bytes
+  specified by host PR #470
+- add support for VI_ATTR_SUPPRESS_END_EN for USB resources PR #449
+- support open_timeout for TCPIP hislip resources PR #430
+- fix serial flow control configuration PR #483
+- Fix large data transfer using USBTMC PR #490
+
+0.7.2 (07/03/2024)
+------------------
+
+- fix usbtmc to use MaxPacketSize reported by endpoint PR #417
+
+0.7.1 (26/10/2023)
+------------------
+
+- add URL-support to ASLR devices PR #386
+- add support for GPIB secondary addresses
+- fix missing sock.close() in rpc _connect()
+- Adjusted how `iter_bytes` works to be more accurate to the VISA spec and removed
+  it from the `serial` module (it can still be found in `common`)
+- fix HiSLIP message tracking after read timeout PR #376
+- handle read_termination of null in tcipip PR #394
+- fix tcpip keepalive PR #396
+- store more attributes for USB resources PR #399
+
+0.7.0 (05/05/2023)
+------------------
+
+- add support for the flush operation with TCPIP::SOCKET resources PR #350
+- drop support for Python 3.7 PR #362
+- fix listing of available resources PR #362
+- fix hislip support for custom sub_addresses PR #359
+- fix bad USBRaw resource preventing enumeration of other resources PR #370
+
+0.6.3 (17-02-2023)
+------------------
+
+- fix bad behavior on PyVISA 1.12 and hence on Python 3.7 PR #357
+  0.6.x is the last version that will support Python 3.7
+
+0.6.2 (08-02-2023)
+------------------
+
+- fix usb resource handling by avoiding multiple calls to set_configuration PR #352
+- formatting fixes on files using "black" PR #352
+
+0.6.1 (25-01-2023)
+------------------
+
+- fix listing resources when some optional dependencies are missing PR #349
+- properly list discovered TCPIP resources PR #349
+- fix pyvisa-info output for TCPIP and GPIB resources PR #349
+
+0.6.0 (22-12-2022)
+------------------
+
+- fix writing large messages over TCPIP using the VXI-11 protocol PR #343
+- add support for the hislip protocol over TCPIP PR #331
+- allow to list TCPIP resources PR #326
+  In order to discover resources over all subnets psutil needs to be installed
+- attempt to stabilize access to USBTMC resources PR #335
+  Reduce the number of device reset performed and only set all settings if it
+  is meaningful (more than one settings exist.)
+
+  A huge thanks to @bobmacnamara for his work adding hislip and vicp support !
+
+0.5.3 (12-05-2022)
+------------------
+- fix tcp/ip connections dropping from inside Docker containers after 5 minute idling #285
+- fix ControlFlow.none as an invalid attribute in serial.py PR #317
+- VXI11 bug fix: skip over stale rx packets instead of raising an exception. PR #322
+- VXI11 bug fix: to ensure all data gets sent, replace calls to sock.send()
+  with calls to sock.sendall(), and replace calls to sock.sendto() with
+  calls to a routine that loops until all data is sent. PR #322
+
+0.5.2 (04-02-2020)
+------------------
+
+- handle SUPPRESS_END_EN in usb.py to fix #293 PR #294
+- add python_requires to avoid people trying to get a
+  new pyvisa-py on Python 2 PR #295
+  This addresses pyvisa issue #578
+
+0.5.1 (30-09-2020)
+------------------
+
+- list serial resources under Windows without the COM prefix #269
+- fix writing to serial resources PR #277
+- fix return value of USB close method PR #265
+- fix pyvisa version constraint PR #268
+
+0.5.0 (16-09-2020)
+------------------
+
+In 0.5.0, the Python package installed in site-packages in now called pyvisa_py
+which makes it a valid python package. This change was decided because the old name
+was causing issues with tools such as Mypy and PyInstaller.
+
+- start running testsuite on Keysight buildbot PR #247 #252
+- fix import in gpib.py when using linux-gpib PR #246
+- fix opening some TCPIP resources PR #242
+  Some instrument do not indicate that the returned packet is the last one, so
+  fix the number of returned packet for a TCPIP INSTR resource.
+- add typing validation through mypy PR #238
+- use Numpy style dosctrings PR #238
+- format the code with black and isort PR #236
+- drop Python 2 support and run against PyVISA 1.11 PR #222
+- usbtmc: improve support for USB488 devices. PR #241
+  For instrument that support REN_CONTROL, we now always assert the REN line.
+- fix a crash on Windows when opening multiple USBTMC devices
+
+0.4.1 (2020-05-27)
+------------------
+
+- fix typo in tcpip.py PR #233 (back-ported)
+
+0.4.0 (2020-05-06)
+------------------
+
+- support device lan name in TCPIP INSTR resources PR #226
+- fix handling of VXI11 flags in device_write PR #226
+- do not enforce 4 bytes padding RFC 1014 since some instrument do not respect
+  it (Issue # 225) PR #226
+- fix not setting stop bits with serial devices PR #205
+- fix improper wait time before a timeout in the TCPIP backend PR # 173
+- add GPIB support for proprietary device drivers on Windows and Linux
+  (experimental): try importing gpib-ctypes if linux-gpib is not present.
+  fix #105 #137
+- fix return types of PyVisaLibrary and Session methods to match
+  pyvisa.highlevel.VisaLibraryBase fix #169 PR #170
+- avoid double closing of gpib resources PR #171
+- fix initialization of timeout for the USB resources (the default was set
+  before creating the underlying connection to which the timeout must be passed
+  and was not). PR #167
+- implement USBTMC abort sequence after read timeout to avoid losing
+  communication with the instrument after a timeout occurs. PR #179
+- fix custom timeout for USB instruments. PR #179
+- fix triggering for all protocols. PR #180
+- add support for "quirky" devices made by Rigol. PR #186 PR #207
+- add support for Visa flush operation. PR #208
+- fix reading large amounts of data from some instruments when using VXI-11. PR #209
+
+0.3.1 (2018-09-12)
+------------------
+
+- Fix initialization of timeout (issue identified in TCPIP resources) PR #160
+
+0.3 (2018-09-05)
+----------------
+
+- Fix handling of seesion registration under Python 3.7 PR #155
+- Add read_stb, assert_trigger, lock, unlock to highlevel PR #139
+- Fix timeout handling in usb PR #144
+- Add gpib_command and assert_trigger to GPIB PR # 136
+- Handle ValueError in usb list fix #131 PR #132
+- Fix reading on GPIB and implement clear and gpib_send_ifc PR #132
+- Do not error when listing USB devices PR #126
+- Fix an error in the handling of the termchar for TCPIP INSTR PR #126
+- Make list_resources return an empty tuple instead of erroring PR #121
+- Proper support for timeout in TCPIP INSTR sessions PR #120 #127 #130 #144
+- Proper encoding of data before transfer for all backends PR #119
+- Unify use of StatusCode PR #118
+- Improve handling of sessions attrs PR #116
+- TCPIP SOCKET timeout handling improvement PR #115
+- Fix compatibility with pyserial 3.0 PR #112
+- TCPIP SOCKET handler read should not block PR #107
+- TCPIP error handling fixes PR #100
+- Use repr() instead of str() to log RPC record PR #97
+- Speed up large transfer over GPIB 2beb52a5bcea2dae32d4a9908dc19f7874bfc0b7
+- Catch GPIB errors while enumerating devices 9fea9d5c40cc6c33ce1244c209e5e576a33abfc2
+- Add a serial poll function to GPIB backend PR #67
+- Handle timeout in USB TMC backend PR #64
+- Make USB TMC backend faster by transferring multiple bytes PR #63
+- Fix issue with encoding before data transfer PR #59 #
+- Get Linux GPIB version PR #55
+- Fix broken import in TCPIP sessions PR #51
+
+
+0.2 (2015-08-25)
+----------------
+
+- Added support for TCPIP Socket.
+  (Issue #38, thanks Thorsten Liebig)
+- Added support for GPIB INSTR using linux-gpib.
+  (Issue #24, thanks bessman)
+- Added support for USB RAW.
+  (Issue #18, kopp)
+- Better error reporting when pyusb or pyserial is missing.
+- Fixed logging of unicode strings.
+  (Issue #54)
+- Fixed timeout in SerialSession.
+  (Issue #44)
+- Moved resource name parsing to PyVISA.
+- VXI11 protocol performance enhancement.
+  (thanks alexforencich)
+- Improved pyusb importing.
+- Fixed large binary reads in TCPIP.
+- Added backend information to logger.
+- Use pyvisa compat/struct.py for python < 2.7.8
+  (thanks Martin Ritter)
+
+
+
+0.1 (2015-02-08)
+----------------
+
+- Initial release. Preliminary support for:
+  - USB INSTR
+  - TCPIP INSTR
+  - ASRL INSTR
