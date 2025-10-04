@@ -1,6 +1,7 @@
 __pycache__/
 .venv/
 .vscode/
+build/
 
 pyvisa/
 pyvisa-py/
@@ -8,3 +9,4 @@ pyvisa-sim/
 
 # robot framework
 results/
+robot_library.egg-info/

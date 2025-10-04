@@ -1,7 +1,7 @@
 import logging
 
 from devices import HP53131A
-from robot_library import BaseLibrary, publish_result, measure
+from robot_library.base import BaseLibrary, publish_result, measure
 
 
 logger = logging.getLogger(__name__)

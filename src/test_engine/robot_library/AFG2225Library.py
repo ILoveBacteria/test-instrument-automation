@@ -1,7 +1,7 @@
 import logging
 
 from devices import AFG2225
-from robot_library import BaseLibrary, publish_status
+from robot_library.base import BaseLibrary, publish_status
 
 
 logger = logging.getLogger(__name__)
