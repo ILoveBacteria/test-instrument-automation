@@ -78,4 +78,6 @@ Replace `'path/to/2025-05-13-raspios-bookworm-armhf-lite.img.xz'` with the actua
      ```
    - Replace `192.168.1.175` with the actual IP address of your device.
 
+6. **Connect to WiFi** (Optional): Use `raspi-config` to setup wireless network connection.
+
 You should now have remote access to your Raspberry Pi and be ready for further setup steps.
