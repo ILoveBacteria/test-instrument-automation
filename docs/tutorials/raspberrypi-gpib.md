@@ -5,8 +5,8 @@ This tutorial will guide you through the process of configuring a Raspberry Pi t
 ## Step 1: Getting Started with the Raspberry Pi
 
 ### Hardware Requirements
-- **Raspberry Pi 3 Model B+** (or newer)
-- **MicroSD Card**: At least 16 GB is recommended
+- **Raspberry Pi 3 Model**
+- **MicroSD Card**: At least 8 GB is recommended
 - **Power Supply**: Compatible with your Raspberry Pi model
 - **Ethernet Cable or Wi-Fi**: For network connectivity
 
@@ -81,3 +81,63 @@ Replace `'path/to/2025-05-13-raspios-bookworm-armhf-lite.img.xz'` with the actua
 6. **Connect to WiFi** (Optional): Use `raspi-config` to setup wireless network connection.
 
 You should now have remote access to your Raspberry Pi and be ready for further setup steps.
+
+
+## Step 2: Install Required Packages and GPIB Drivers
+
+Follow these steps to install the necessary packages and set up the GPIB drivers on your Raspberry Pi:
+
+1. **Update Package Lists**
+   ```bash
+   sudo apt update
+   ```
+
+2. **Install Essential Tools**
+   ```bash
+   sudo apt-get -y install git rsync
+   ```
+
+3. **Clone and Prepare GPIB Source**
+   ```bash
+   git clone -b debian/4.3.6-lsi7 https://github.com/lightside-instruments/gpib-debian.git gpib
+   rsync -rav gpib/ gpib_4.3.6
+   rm -rf gpib_4.3.6/.git
+   rm -rf gpib_4.3.6/debian
+   tar -czvf gpib_4.3.6.orig.tar.gz gpib_4.3.6
+   rm -rf gpib_4.3.6
+   ```
+
+4. **Install Development Tools and Libraries**
+   ```bash
+   sudo apt-get -y install devscripts libtcl8.6 tcl8.6
+   ```
+
+5. **Install Prebuilt GPIB Binaries**
+   ```bash
+   git clone --depth 1 https://github.com/ILoveBacteria/test-instrument-automation
+   cd test-instrument-automation/raspberry_pi_binaries/
+   sudo dpkg -i *.deb
+   ```
+
+6. **Install Kernel Headers and Module Assistant**
+   ```bash
+   sudo apt install module-assistant -y
+   sudo apt install raspberrypi-kernel-headers -y
+   sudo module-assistant auto-install gpib-modules-source
+   sudo cp gpib.conf /usr/etc/gpib.conf
+   ```
+
+7. **Set Up Python Environment**
+   ```bash
+   sudo apt install python3-pip -y
+   python -m venv .venv --system-site-packages
+   source .venv/bin/activate
+   pip install -r requirements.txt
+   ```
+
+8. **Start the GPIB Service**
+   ```bash
+   ./startup_gpib.sh
+   ```
+
+Your Raspberry Pi should now have all required packages and GPIB drivers installed. Proceed to the next step to configure and test your GPIB
