@@ -85,6 +85,8 @@ You should now have remote access to your Raspberry Pi and be ready for further 
 
 ## Step 2: Install Required Packages and GPIB Drivers
 
+Steps source from https://www.hackster.io/lightside-instruments/the-gpib4pi-gpib-for-raspberry-pi-shield-4b3e9a 
+
 Follow these steps to install the necessary packages and set up the GPIB drivers on your Raspberry Pi:
 
 1. **Update Package Lists**
