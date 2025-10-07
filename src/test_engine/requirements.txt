@@ -7,3 +7,4 @@ PyVISA-py @ git+https://github.com/ILoveBacteria/pyvisa-py@62ca8e408910e9bf016a8
 PyVISA-sim @ git+https://github.com/ILoveBacteria/pyvisa-sim.git@e79e054b255d47515423b484ab3ebd6311a1b382
 PyVISA-proxy==0.1.3
 canopen~=2.4
+python-can-remote~=0.2

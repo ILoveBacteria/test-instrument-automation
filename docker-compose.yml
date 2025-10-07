@@ -1,7 +1,7 @@
 services:
   gui:
     build:
-      context: ./gui
+      context: ./src/gui
     ports:
       - "127.0.0.1:8501:8501"
     volumes:
@@ -29,7 +29,7 @@ services:
 
   test_engine:
     build:
-      context: ./test_engine
+      context: ./src/test_engine
     volumes:
       - ./test_engine:/app
     container_name: test-engine
