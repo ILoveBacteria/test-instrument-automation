@@ -160,7 +160,7 @@ def process_new_redis_message():
         st.session_state.device_data[owner] = msg_data
         st.rerun()
 
-    elif msg_type in ['suite', 'keyword', 'test']:
+    elif msg_type in ['suite', 'keyword', 'test', 'message']:
         if msg_type == 'suite' and msg_data.get('action') == 'start':
             st.session_state.execution_log = ["--- Listening for new test runs ---"]
         log_entry = format_log_message(msg_data)

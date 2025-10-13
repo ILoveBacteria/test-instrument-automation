@@ -53,3 +53,6 @@ class RobotRedisListener:
         self.number_of_tests_run += 1
         self.progress = self.number_of_tests_run / self.number_of_tests if self.number_of_tests else 0
         self._pub({'progress': self.progress, 'lineno': data.lineno, 'type': 'test', 'action': 'end', 'name': result['name'], 'status': result['status'], 'start_time': result['start_time'], 'elapsed_time': result['elapsed_time']})
+
+    def log_message(self, message):
+        self._pub({'progress': self.progress, 'type': 'message', 'name': str(message)})
