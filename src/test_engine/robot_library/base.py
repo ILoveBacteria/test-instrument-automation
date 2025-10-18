@@ -1,9 +1,8 @@
-import os
-import redis
 import json
 import functools
 
 from robot.api.deco import library
+from robot_library.broker import RedisBroker
 
 
 @library(scope='GLOBAL', auto_keywords=True)
@@ -11,19 +10,19 @@ class BaseLibrary:
     NAME: str = 'unknown_device'
     CHANNELS = None
     FIELDS = None
-    PRIORITY = 1
+    WINDOW = 1
     
     def __init__(self):
         self.measure_type_status = 'unknown'
         self.measure_unit_status = 'unknown'
-        self.connected = False
-        self._r = redis.Redis(host=os.getenv('REDIS_HOST', 'localhost'), port=os.getenv('REDIS_PORT', 6379), decode_responses=True)
-        try:
-            self._r.ping()
-            self.connected = True
-        except redis.ConnectionError:
-            print(f"Could not connect to Redis")
-        self._publish(self._publish_format(0.0))
+        self.redis = RedisBroker()
+        self.redis.store_device(device_name=self.NAME, window=self.WINDOW, )
+        
+    def _publish_startup(self):
+        event = {'type': 'startup', 'priority': self.PRIORITY, 'owner': self.NAME}
+        event['data'] = [[] for _ in range(self.CHANNELS)]
+        if self.connected:
+            self._r.publish('robot_events', json.dumps(event))
 
     def _publish(self, channels: list):
         event = {'type': 'data', 'priority': self.PRIORITY, 'status': 'OK', 'owner': self.NAME}
